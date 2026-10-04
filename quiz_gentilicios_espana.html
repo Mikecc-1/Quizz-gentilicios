@@ -221,6 +221,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
             text-align: center;
+            background-color: #ffffff;
         }
 
         .mode-card:hover {
@@ -462,19 +463,24 @@ let score = 0;
 let gameLength = 10;
 let userAnswers = [];
 
-// Selección de duración
+// Función corregida para seleccionar modo sin acumular estilos
 function selectGameLength(num) {
     gameLength = num;
-    document.querySelectorAll('.mode-card').forEach(card => card.style.borderColor = '#e5e7eb');
-    document.getElementById(`mode-${num}`).style.borderColor = '#4f46e5';
-    document.getElementById(`mode-${num}`).style.backgroundColor = '#f0f3ff';
+    document.querySelectorAll('.mode-card').forEach(card => {
+        card.style.borderColor = '#e5e7eb';
+        card.style.backgroundColor = '#ffffff';
+    });
+    const activeCard = document.getElementById(`mode-${num}`);
+    if (activeCard) {
+        activeCard.style.borderColor = '#4f46e5';
+        activeCard.style.backgroundColor = '#f0f3ff';
+    }
 }
 
 // Inicialización por defecto
 selectGameLength(10);
 
 function startGame() {
-    // Mezclar preguntas aleatoriamente
     let shuffled = [...DB].sort(() => 0.5 - Math.random());
     selectedQuestions = shuffled.slice(0, gameLength);
     currentQuestionIndex = 0;
@@ -490,42 +496,36 @@ function startGame() {
 
 function loadQuestion() {
     const qData = selectedQuestions[currentQuestionIndex];
-    document.getElementById('question-count').innerText = `Pregunta ${currentQuestionIndex + 1} de ${selectedQuestions.length}`;
-    document.getElementById('score-count').innerText = `Puntos: ${score}`;
+    document.getElementById('question-count').textContent = `Pregunta ${currentQuestionIndex + 1} de ${selectedQuestions.length}`;
+    document.getElementById('score-count').textContent = `Puntos: ${score}`;
     
-    // Actualizar barra de progreso
-    const progressPercent = ((currentQuestionIndex) / selectedQuestions.length) * 100;
+    const progressPercent = (currentQuestionIndex / selectedQuestions.length) * 100;
     document.getElementById('progress-bar').style.width = `${progressPercent}%`;
 
-    document.getElementById('question-text').innerText = `¿Cuál es el gentilicio (culto o habitual) de la provincia de ${qData.province}?`;
+    document.getElementById('question-text').textContent = `¿Cuál es el gentilicio (culto o habitual) de la provincia de ${qData.province}?`;
 
-    // Ocultar explicación y botón siguiente
     const expDiv = document.getElementById('explanation-text');
     expDiv.classList.remove('visible');
     expDiv.innerHTML = '';
     document.getElementById('btn-next').style.display = 'none';
 
-    // Generar 4 opciones (1 correcta, 3 distractoras)
     const correctAnswer = Array.isArray(qData.correct) ? qData.correct[0] : qData.correct;
     
-    // Conseguir distractores de otras provincias
     let otherDistractors = DB
         .filter(item => item.province !== qData.province)
         .map(item => Array.isArray(item.correct) ? item.correct[0] : item.correct);
     
-    // Mezclar distractores
     otherDistractors.sort(() => 0.5 - Math.random());
     let options = [correctAnswer, otherDistractors[0], otherDistractors[1], otherDistractors[2]];
     options.sort(() => 0.5 - Math.random());
 
-    // Renderizar botones
     const container = document.getElementById('options-container');
     container.innerHTML = '';
 
     options.forEach(opt => {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
-        btn.innerText = opt;
+        btn.textContent = opt;
         btn.onclick = () => checkAnswer(btn, opt, correctAnswer, qData);
         container.appendChild(btn);
     });
@@ -540,18 +540,16 @@ function checkAnswer(selectedBtn, selectedText, correctAnswer, qData) {
     if (isCorrect) {
         selectedBtn.classList.add('correct');
         score++;
-        document.getElementById('score-count').innerText = `Puntos: ${score}`;
+        document.getElementById('score-count').textContent = `Puntos: ${score}`;
     } else {
         selectedBtn.classList.add('wrong');
-        // Marcar la correcta
         buttons.forEach(btn => {
-            if (btn.innerText === correctAnswer) {
+            if (btn.textContent === correctAnswer) {
                 btn.classList.add('correct');
             }
         });
     }
 
-    // Guardar para la revisión final
     userAnswers.push({
         province: qData.province,
         userChoice: selectedText,
@@ -560,12 +558,10 @@ function checkAnswer(selectedBtn, selectedText, correctAnswer, qData) {
         info: qData.info
     });
 
-    // Mostrar explicación
     const expDiv = document.getElementById('explanation-text');
     expDiv.innerHTML = `<strong>Nota Lingüística:</strong> ${qData.info}`;
     expDiv.classList.add('visible');
 
-    // Mostrar botón siguiente
     document.getElementById('btn-next').style.display = 'inline-block';
 }
 
@@ -583,8 +579,8 @@ function showResults() {
     document.getElementById('end-screen').style.display = 'block';
 
     const percentage = Math.round((score / selectedQuestions.length) * 100);
-    document.getElementById('final-score').innerText = `${score}/${selectedQuestions.length}`;
-    document.getElementById('final-percentage').innerText = `${percentage}% Aciertos`;
+    document.getElementById('final-score').textContent = `${score}/${selectedQuestions.length}`;
+    document.getElementById('final-percentage').textContent = `${percentage}% Aciertos`;
 
     let feedback = "";
     if (percentage === 100) {
@@ -596,9 +592,8 @@ function showResults() {
     } else {
         feedback = "Necesitas un repaso adicional. Haz otra ronda para afianzar los gentilicios más complejos.";
     }
-    document.getElementById('final-feedback').innerText = feedback;
+    document.getElementById('final-feedback').textContent = feedback;
 
-    // Renderizar lista de revisión
     const reviewList = document.getElementById('review-list');
     reviewList.innerHTML = '';
 
@@ -606,7 +601,7 @@ function showResults() {
         const div = document.createElement('div');
         div.className = `review-item ${item.isCorrect ? 'correct-item' : 'wrong-item'}`;
         div.innerHTML = `
-            <strong>${index + 1}. ${item.province}:</strong> ${item.isCorrect ? '✅ Correcto' : '❌ Incorecto'}<br>
+            <strong>${index + 1}. ${item.province}:</strong> ${item.isCorrect ? '✅ Correcto' : '❌ Incorrecto'}<br>
             <span style="color: #4b5563;">Tu respuesta: <em>${item.userChoice}</em> ${!item.isCorrect ? `| Correcta: <strong>${item.correctChoice}</strong>` : ''}</span><br>
             <small style="color: #6b7280;">💡 ${item.info}</small>
         `;
@@ -617,6 +612,7 @@ function showResults() {
 function restartGame() {
     document.getElementById('end-screen').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
+    selectGameLength(10);
 }
 </script>
 
