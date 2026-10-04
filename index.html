@@ -1,624 +1,1066 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz de Gentilicios - Provincias de España | 2º Bachillerato</title>
+    <title>Hispania Gentilicios | 2º Bachillerato</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f3ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#1e1b4b',
+                        },
+                        accent: {
+                            gold: '#fbbf24',
+                            emerald: '#10b981',
+                            rose: '#f43f5e',
+                            cyan: '#06b6d4'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg-color: #f3f4f6;
-            --card-bg: #ffffff;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --correct: #10b981;
-            --correct-bg: #ecfdf5;
-            --wrong: #ef4444;
-            --wrong-bg: #fef2f2;
-            --accent: #f59e0b;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
-
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            color: var(--text-main);
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            background-image: 
+                radial-gradient(at 20% 20%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+                radial-gradient(at 80% 80%, rgba(244, 63, 94, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.06) 0px, transparent 50%);
+            background-attachment: fixed;
         }
 
-        .container {
-            background-color: var(--card-bg);
-            border-radius: 20px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 650px;
-            padding: 35px;
-            position: relative;
-            overflow: hidden;
+        .glass-card {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
+        .glass-pill {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .badge {
-            background-color: #e0e7ff;
-            color: var(--primary);
-            font-size: 0.85rem;
-            font-weight: 700;
-            padding: 6px 14px;
-            border-radius: 20px;
-            display: inline-block;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        /* 3D Card Flip */
+        .perspective-1000 {
+            perspective: 1000px;
         }
 
-        h1 {
-            font-size: 1.8rem;
-            color: #111827;
-            margin-bottom: 8px;
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        p.subtitle {
-            color: var(--text-muted);
-            font-size: 0.95rem;
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
         }
 
-        .progress-container {
-            width: 100%;
-            background-color: #e5e7eb;
-            height: 10px;
-            border-radius: 5px;
-            margin: 20px 0;
-            overflow: hidden;
+        .rotate-y-180 {
+            transform: rotateY(180deg);
         }
 
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #4f46e5, #a855f7);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .stats-bar {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-        }
-
-        .question-card {
-            margin-bottom: 25px;
-        }
-
-        .question-title {
-            font-size: 1.35rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 15px;
-            line-height: 1.4;
-        }
-
-        .options-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-        }
-
-        .option-btn {
-            background-color: #f9fafb;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 14px 18px;
-            font-size: 1rem;
-            font-weight: 500;
-            color: #374151;
-            text-align: left;
+        /* SVG Map Styling */
+        .province-path {
+            fill: #1e293b;
+            stroke: #334155;
+            stroke-width: 1.5;
+            transition: all 0.25s ease;
             cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
-        .option-btn:hover:not(:disabled) {
-            border-color: var(--primary);
-            background-color: #f0f3ff;
-            transform: translateY(-2px);
+        .province-path:hover {
+            fill: #6366f1;
+            stroke: #818cf8;
+            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.6));
         }
 
-        .option-btn:disabled {
-            cursor: default;
+        .province-path.selected-target {
+            fill: #f59e0b;
+            stroke: #fbbf24;
+            animation: pulse-glow 1.5s infinite alternate;
         }
 
-        .option-btn.correct {
-            background-color: var(--correct-bg);
-            border-color: var(--correct);
-            color: #065f46;
-            font-weight: 700;
+        .province-path.correct-target {
+            fill: #10b981 !important;
+            stroke: #34d399 !important;
         }
 
-        .option-btn.wrong {
-            background-color: var(--wrong-bg);
-            border-color: var(--wrong);
-            color: #991b1b;
+        .province-path.wrong-target {
+            fill: #ef4444 !important;
+            stroke: #f87171 !important;
         }
 
-        .explanation {
-            margin-top: 15px;
-            padding: 12px 16px;
-            background-color: #f3f4f6;
-            border-left: 4px solid var(--primary);
-            border-radius: 6px;
-            font-size: 0.9rem;
-            color: #4b5563;
-            display: none;
+        @keyframes pulse-glow {
+            from { filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.4)); }
+            to { filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.9)); }
         }
 
-        .explanation.visible {
-            display: block;
-            animation: fadeIn 0.3s ease;
+        .fire-streak {
+            animation: fire-bounce 0.8s infinite alternate ease-in-out;
         }
 
-        .footer-nav {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 25px;
+        @keyframes fire-bounce {
+            0% { transform: scale(1) translateY(0); }
+            100% { transform: scale(1.15) translateY(-3px); }
         }
 
-        .btn-next {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 28px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
-            display: none;
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
-
-        .btn-next:hover {
-            background-color: var(--primary-hover);
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
         }
-
-        .btn-next:active {
-            transform: scale(0.98);
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
         }
-
-        /* Mode Selection Screen */
-        .start-screen, .end-screen {
-            text-align: center;
-            padding: 10px 0;
-        }
-
-        .mode-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 25px 0;
-        }
-
-        .mode-card {
-            border: 2px solid #e5e7eb;
-            border-radius: 15px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
-        }
-
-        .mode-card:hover {
-            border-color: var(--primary);
-            background-color: #f0f3ff;
-            transform: translateY(-3px);
-        }
-
-        .mode-card h3 {
-            font-size: 1.1rem;
-            margin-bottom: 8px;
-            color: var(--primary);
-        }
-
-        .mode-card p {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .btn-start {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 14px 36px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            border-radius: 12px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4);
-            transition: all 0.2s;
-        }
-
-        .btn-start:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-2px);
-        }
-
-        /* Results styling */
-        .score-circle {
-            width: 130px;
-            height: 130px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #4f46e5, #9333ea);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            margin: 20px auto;
-            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
-        }
-
-        .score-circle .number {
-            font-size: 2.5rem;
-            font-weight: 800;
-            line-height: 1;
-        }
-
-        .score-circle .label {
-            font-size: 0.8rem;
-            opacity: 0.85;
-            text-transform: uppercase;
-            margin-top: 4px;
-        }
-
-        .review-list {
-            max-height: 250px;
-            overflow-y: auto;
-            text-align: left;
-            margin: 20px 0;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 10px;
-            background-color: #fafafa;
-        }
-
-        .review-item {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            font-size: 0.9rem;
-        }
-
-        .review-item:last-child {
-            border-bottom: none;
-        }
-
-        .review-item.wrong-item {
-            border-left: 4px solid var(--wrong);
-        }
-
-        .review-item.correct-item {
-            border-left: 4px solid var(--correct);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @media (max-width: 480px) {
-            .container { padding: 20px; }
-            .mode-options { grid-template-columns: 1fr; }
-            h1 { font-size: 1.5rem; }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
         }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col font-sans antialiased text-gray-100 selection:bg-brand-500 selection:text-white pb-12">
 
-<div class="container">
-    <!-- PANTALLA INICIAL -->
-    <div id="start-screen" class="start-screen">
-        <span class="badge">2º Bachillerato — Lengua Castellana</span>
-        <h1>Quiz de Gentilicios</h1>
-        <p class="subtitle">Pon a prueba tus conocimientos sobre los gentilicios de las provincias españolas (cultos, históricos y habituales).</p>
-        
-        <div class="mode-options">
-            <div class="mode-card" onclick="selectGameLength(10)" id="mode-10">
-                <h3>Rápido (10 preguntas)</h3>
-                <p>Ideal para un repaso veloz del temario antes del examen.</p>
+    <!-- TOP NAVBAR -->
+    <header class="sticky top-0 z-50 glass-card border-b border-gray-800/80 px-4 lg:px-8 py-3 mb-6">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchMode('menu')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-700 flex items-center justify-center shadow-lg shadow-brand-500/30 text-white font-display font-bold text-xl">
+                    🇪🇸
+                </div>
+                <div>
+                    <h1 class="font-display font-bold text-lg leading-none bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-brand-100">
+                        HispaniaGentilicios
+                    </h1>
+                    <span class="text-xs text-brand-500 font-semibold tracking-wider uppercase">2º Bachillerato • Lengua</span>
+                </div>
             </div>
-            <div class="mode-card" onclick="selectGameLength(25)" id="mode-25">
-                <h3>Medio (25 preguntas)</h3>
-                <p>Un recorrido equilibrado por la geografía lingüística.</p>
-            </div>
-            <div class="mode-card" onclick="selectGameLength(50)" id="mode-50">
-                <h3>Examen Total (50 Provincias)</h3>
-                <p>Demuestra tu dominio absoluto de todas las provincias y ciudades autónomas.</p>
-            </div>
-        </div>
 
-        <button class="btn-start" onclick="startGame()">¡Empezar Cuestionario!</button>
-    </div>
-
-    <!-- PANTALLA DE JUEGO -->
-    <div id="game-screen" style="display: none;">
-        <div class="header">
-            <span class="badge">Lengua y Literatura Castellana</span>
-            <div class="stats-bar">
-                <span id="question-count">Pregunta 1 de 10</span>
-                <span id="score-count">Puntos: 0</span>
-            </div>
-            <div class="progress-container">
-                <div class="progress-bar" id="progress-bar"></div>
+            <!-- Top Controls & Audio Toggle -->
+            <div class="flex items-center gap-3">
+                <button id="audio-toggle-btn" onclick="toggleAudio()" class="glass-pill p-2.5 rounded-xl hover:bg-gray-800 transition text-gray-300 flex items-center gap-2 text-xs font-semibold">
+                    <span id="audio-icon">🔊</span>
+                    <span class="hidden sm:inline" id="audio-label">Sonido: ON</span>
+                </button>
+                <div class="glass-pill px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs font-bold text-accent-gold">
+                    <span>🏆 Récord:</span>
+                    <span id="global-highscore">0</span>
+                </div>
             </div>
         </div>
+    </header>
 
-        <div class="question-card">
-            <h2 class="question-title" id="question-text">¿Cuál es el gentilicio habitual o culto de esta provincia?</h2>
-            <div class="options-grid" id="options-container">
-                <!-- Opciones dinámicas -->
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-6xl mx-auto px-4 flex-1 w-full flex flex-col">
+
+        <!-- MENU VIEW -->
+        <section id="view-menu" class="space-y-8 animate-fade-in">
+            <!-- Hero Banner -->
+            <div class="glass-card rounded-3xl p-6 sm:p-10 relative overflow-hidden border border-brand-500/20">
+                <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="max-w-2xl relative z-10 space-y-4">
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-brand-500/20 text-brand-100 border border-brand-500/30 uppercase tracking-wider">
+                        Preparación EBAU / PAU
+                    </span>
+                    <h2 class="font-display text-3xl sm:text-5xl font-extrabold text-white leading-tight">
+                        Domina los <span class="bg-clip-text text-transparent bg-gradient-to-r from-brand-100 via-indigo-300 to-accent-cyan">Gentilicios Cultos</span> y Provincias de España
+                    </h2>
+                    <p class="text-gray-400 text-sm sm:text-base leading-relaxed">
+                        Aprende los étimos latinos (<i>Onubense</i>, <i>Gaditano</i>, <i>Oscense</i>, <i>Abulense</i>), variantes regionales y cultismos con mapas interactivos, contrarreloj y desafíos.
+                    </p>
+                </div>
             </div>
-            <div class="explanation" id="explanation-text"></div>
-        </div>
 
-        <div class="footer-nav">
-            <button class="btn-next" id="btn-next" onclick="nextQuestion()">Siguiente Pregunta →</button>
-        </div>
-    </div>
+            <!-- Game Modes Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- Mode 1: Quiz -->
+                <div onclick="startQuizMode()" class="glass-card rounded-2xl p-6 hover:border-brand-500/50 hover:scale-[1.02] transition-all cursor-pointer group flex flex-col justify-between relative overflow-hidden">
+                    <div class="w-12 h-12 rounded-xl bg-brand-500/20 text-brand-100 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+                        📝
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-xl text-white mb-1 group-hover:text-brand-100 transition">Modo Examen</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed mb-4">Preguntas con distractores morfológicos sutiles (-ense, -eño, cultismos).</p>
+                    </div>
+                    <span class="text-xs font-bold text-brand-100 flex items-center gap-1 group-hover:translate-x-1 transition">Jugar Ahora →</span>
+                </div>
 
-    <!-- PANTALLA FINAL DE RESULTADOS -->
-    <div id="end-screen" class="end-screen" style="display: none;">
-        <span class="badge">Resultado Final</span>
-        <h1>¡Cuestionario Completado!</h1>
-        <p class="subtitle" id="final-feedback">Aquí tienes el resumen de tu rendimiento:</p>
+                <!-- Mode 2: Interactive SVG Map -->
+                <div onclick="startMapMode()" class="glass-card rounded-2xl p-6 hover:border-accent-emerald/50 hover:scale-[1.02] transition-all cursor-pointer group flex flex-col justify-between relative overflow-hidden">
+                    <div class="w-12 h-12 rounded-xl bg-accent-emerald/20 text-accent-emerald flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+                        🗺️
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-xl text-white mb-1 group-hover:text-accent-emerald transition">Mapa Interactivo</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed mb-4">Ubica la provincia en el mapa vectorial según el gentilicio mostrado.</p>
+                    </div>
+                    <span class="text-xs font-bold text-accent-emerald flex items-center gap-1 group-hover:translate-x-1 transition">Explorar Mapa →</span>
+                </div>
 
-        <div class="score-circle">
-            <span class="number" id="final-score">0/10</span>
-            <span class="label" id="final-percentage">0% Aciertos</span>
-        </div>
+                <!-- Mode 3: 60s Challenge -->
+                <div onclick="startTimeTrialMode()" class="glass-card rounded-2xl p-6 hover:border-accent-rose/50 hover:scale-[1.02] transition-all cursor-pointer group flex flex-col justify-between relative overflow-hidden">
+                    <div class="w-12 h-12 rounded-xl bg-accent-rose/20 text-accent-rose flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+                        ⚡
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-xl text-white mb-1 group-hover:text-accent-rose transition">Contrarreloj 60s</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed mb-4">Acierta el máximo de gentilicios antes de que expire el tiempo.</p>
+                    </div>
+                    <span class="text-xs font-bold text-accent-rose flex items-center gap-1 group-hover:translate-x-1 transition">Iniciar Desafío →</span>
+                </div>
 
-        <h3 style="text-align:left; font-size: 1rem; margin-top: 15px; color: var(--text-main);">Revisión de respuestas:</h3>
-        <div class="review-list" id="review-list">
-            <!-- Lista de revisión -->
-        </div>
+                <!-- Mode 4: Flashcards -->
+                <div onclick="startFlashcardMode()" class="glass-card rounded-2xl p-6 hover:border-accent-gold/50 hover:scale-[1.02] transition-all cursor-pointer group flex flex-col justify-between relative overflow-hidden">
+                    <div class="w-12 h-12 rounded-xl bg-accent-gold/20 text-accent-gold flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+                        🃏
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-xl text-white mb-1 group-hover:text-accent-gold transition">Tarjetas 3D</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed mb-4">Memorización ágil con efecto giro y notas etimológicas completas.</p>
+                    </div>
+                    <span class="text-xs font-bold text-accent-gold flex items-center gap-1 group-hover:translate-x-1 transition">Estudiar Fichas →</span>
+                </div>
+            </div>
 
-        <button class="btn-start" onclick="restartGame()">Volver a Jugar</button>
-    </div>
-</div>
+            <!-- Dashboard / Achievements / Stats Bar -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <!-- Stats Box -->
+                <div class="glass-card rounded-2xl p-5 space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                        📊 Tus Estadísticas
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3 text-center">
+                        <div class="glass-pill p-3 rounded-xl">
+                            <div class="text-2xl font-black font-display text-brand-100" id="stat-total-games">0</div>
+                            <div class="text-[10px] text-gray-400 uppercase">Partidas</div>
+                        </div>
+                        <div class="glass-pill p-3 rounded-xl">
+                            <div class="text-2xl font-black font-display text-accent-emerald" id="stat-accuracy">0%</div>
+                            <div class="text-[10px] text-gray-400 uppercase">Precisión</div>
+                        </div>
+                    </div>
+                </div>
 
-<script>
-// BASE DE DATOS COMPLETA DE 50 PROVINCIAS Y CIUDADES AUTÓNOMAS
-const DB = [
-    { province: "Álava", correct: ["Alavés", "Alavesa"], info: "Habitual en el País Vasco." },
-    { province: "Albacete", correct: ["Albaceteño / Albacetense"], info: "Tanto 'albaceteño' como la forma culta 'albacetense' son válidas." },
-    { province: "Alicante", correct: ["Alicantino", "Alicantina"], info: "Gentilicio estándar de la provincia alicantina." },
-    { province: "Almería", correct: ["Almeriense", "Almeriano"], info: "'Almeriense' es la forma preferida y más extendida." },
-    { province: "Asturias", correct: ["Asturiano", "Asturiense"], info: "'Asturiense' es una variante culta e histórica procedente del latín Asturiensis." },
-    { province: "Ávila", correct: ["Abulense"], info: "Gentilicio culto muy importante en exámenes. Proviene del antiguo nombre de la ciudad (Ávila/Abula)." },
-    { province: "Badajoz", correct: ["Badajocense", "Badajoteño"], info: "'Badajocense' es la forma culta predominante." },
-    { province: "Barcelona", correct: ["Barcelonés", "Barcelonesa"], info: "En catalán se utiliza 'barceloní / barcelonina'." },
-    { province: "Burgos", correct: ["Burgalés", "Burgosense"], info: "'Burgalés' es el más común; 'burgosense' es la forma culta/eclesiástica." },
-    { province: "Cáceres", correct: ["Cacereño", "Cacereja / Cacerejo"], info: "'Cacereño/a' es la forma normativa general." },
-    { province: "Cádiz", correct: ["Gaditano", "Gaditana"], info: "Proviene de Gadir, el nombre fenicio prehistórico de la ciudad de Cádiz." },
-    { province: "Cantabria", correct: ["Cántabro", "Montañés"], info: "'Montañés/a' alude popularmente a la 'Montaña de Cantabria'." },
-    { province: "Castellón", correct: ["Castellonense", "Castellonero"], info: "'Castellonense' es la forma oficial estándar." },
-    { province: "Ceuta", correct: ["Ceutí", "Ceutiano"], info: "'Ceutí' es el gentilicio con el sufijo de origen árabe -í." },
-    { province: "Ciudad Real", correct: ["Ciudadrealeño", "Cielitano"], info: "'Cielitano' es una forma peculiar empleada tradicionalmente en la zona." },
-    { province: "Córdoba", correct: ["Cordobés", "Califal"], info: "'Califal' remite a su histórico esplendor como capital del Califato de Córdoba." },
-    { province: "A Coruña (La Coruña)", correct: ["Coruñés", "Herculino"], info: "'Herculino' hace referencia a la legendaria vinculación romana con la Torre de Hércules." },
-    { province: "Cuenca", correct: ["Conquense"], info: "Gentilicio culto de raíz latina (Conca)." },
-    { province: "Girona (Gerona)", correct: ["Gerundense"], info: "En catalán se emplea 'gironí / gironina'." },
-    { province: "Granada", correct: ["Granadino", "Granadín"], info: "'Granadín' se utiliza localmente en algunas zonas rurales." },
-    { province: "Guadalajara", correct: ["Alcarreño", "Guadalajareño"], info: "'Alcarreño/a' proviene de la comarca natural de La Alcarria." },
-    { province: "Guipúzcoa", correct: ["Guipuzcoano", "Donostiarra"], info: "'Donostiarra' aplica específicamente a los habitantes de San Sebastián (Donostia)." },
-    { province: "Huelva", correct: ["Onubense"], info: "Proviene de Onuba, la denominación fenicio-romana histórica de la zona." },
-    { province: "Huesca", correct: ["Oscense"], info: "Proviene de la ciudad romana de Osca (nombre antiguo de Huesca)." },
-    { province: "Islas Baleares", correct: ["Balear", "Mallorquín / Ibicenco / Menorquín"], info: "El término general es 'balear' o 'balearico'." },
-    { province: "Jaén", correct: ["Jienense / Jiennense"], info: "Ambas grafías ('Jienense' y 'Jiennense') son completamente válidas." },
-    { province: "La Rioja", correct: ["Riojano", "Riojana"], info: "Gentilicio único oficial para toda la comunidad y provincia autonómica." },
-    { province: "Las Palmas", correct: ["Grancanario", "Palmero"], info: "'Grancanario/a' refiere a la isla principal (Gran Canaria)." },
-    { province: "León", correct: ["Leonés", "Leonesa"], info: "Proviene del reino histórico y la provincia castellanoleonesa." },
-    { province: "Lleida (Lérida)", correct: ["Leridano"], info: "En catalán se utiliza 'lleidatà / lleidatana'." },
-    { province: "Lugo", correct: ["Lucense", "Lugués"], info: "'Lucense' es el gentilicio culto procedente del campamento romano Lucus Augusti." },
-    { province: "Madrid", correct: ["Madrileño", "Madrileña"], info: "Gentilicio de la capital de España y su comunidad uniprovincial." },
-    { province: "Melilla", correct: ["Melillense"], info: "Ciudad autónoma de España en el norte de África." },
-    { province: "Murcia", correct: ["Murciano", "Murciana"], info: "Aplicable tanto a la provincia como a la Región de Murcia." },
-    { province: "Navarra", correct: ["Navarro", "Navarra"], info: "Comunidad foral uniprovincial." },
-    { province: "Ourense (Orense)", correct: ["Ourensano", "Orensano"], info: "Formas castellana y gallega normalizadas." },
-    { province: "Palencia", correct: ["Palentino", "Palencho"], info: "'Palencho' se emplea coloquialmente en ámbitos rurales de la comarca." },
-    { province: "Pontevedra", correct: ["Pontevedrés", "Pontevedrino"], info: "'Pontevedrés/a' es la forma habitual más extendida." },
-    { province: "Salamanca", correct: ["Salmantino", "Charro"], info: "'Charro/a' es la denominación popular y cultural muy viva en Salamanca." },
-    { province: "Segovia", correct: ["Segoviano", "Segoviana"], info: "Referido a la provincia castellana de las murallas y el acueducto." },
-    { province: "Sevilla", correct: ["Sevillano", "Hispalense"], info: "'Hispalense' es el gentilicio culto derivado de Hispalis, nombre romano de Sevilla." },
-    { province: "Soria", correct: ["Soriense", "Soriundo"], info: "'Soriense' es una variante culta; 'soriano' es la más común." },
-    { province: "Tarragona", correct: ["Tarraconense"], info: "Proviene de Tarraco, célebre provincia romana de la Hispania Citerior." },
-    { province: "Teruel", correct: ["Turolense"], info: "Gentilicio culto característico basado en el topónimo medieval Turol." },
-    { province: "Toledo", correct: ["Toledano", "Toledana"], info: "Referido a la histórica ciudad imperial y su provincia." },
-    { province: "Valencia", correct: ["Valenciano", "Valenciana"], info: "Gentilicio de la provincia y comunidad mediterránea." },
-    { province: "Valladolid", correct: ["Vallisoletano", "Vallisoletana"], info: "Proviene de la latinización del topónimo histórico (Vallis Oletum)." },
-    { province: "Vizcaya", correct: ["Vizcaíno", "Bilbaíno"], info: "'Bilbaíno' identifica específicamente a los vecinos de Bilbao." },
-    { province: "Zamora", correct: ["Zamorano", "Zamoreño"], info: "'Zamorano/a' es la denominación oficial y extendida." },
-    { province: "Zaragoza", correct: ["Zaragozano", "Cesaraugustano"], info: "'Cesaraugustano' es la forma culta de Caesaraugusta (fundada por César Augusto)." }
-];
+                <!-- Badges Box -->
+                <div class="glass-card rounded-2xl p-5 space-y-3 md:col-span-2">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                        🎖️ Insignias y Logros Desbloqueados
+                    </h4>
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2" id="badges-container">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
 
-// Estado del juego
-let selectedQuestions = [];
-let currentQuestionIndex = 0;
-let score = 0;
-let gameLength = 10;
-let userAnswers = [];
+        <!-- VIEW: QUIZ / EXAM MODE -->
+        <section id="view-quiz" class="hidden space-y-6">
+            <!-- Top Game HUD -->
+            <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
+                <button onclick="switchMode('menu')" class="text-xs text-gray-400 hover:text-white transition flex items-center gap-1">
+                    ← Salir
+                </button>
+                <div class="flex items-center gap-6">
+                    <div class="text-center">
+                        <span class="text-[10px] text-gray-400 uppercase block">Pregunta</span>
+                        <span class="text-sm font-bold text-white"><span id="quiz-curr-q">1</span>/15</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="text-[10px] text-gray-400 uppercase block">Puntos</span>
+                        <span class="text-sm font-bold text-accent-gold" id="quiz-score">0</span>
+                    </div>
+                    <div class="text-center flex items-center gap-1">
+                        <span id="streak-fire" class="text-lg">🔥</span>
+                        <div>
+                            <span class="text-[10px] text-gray-400 uppercase block">Racha</span>
+                            <span class="text-sm font-bold text-accent-rose" id="quiz-streak">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-// Selección de duración
-function selectGameLength(num) {
-    gameLength = num;
-    document.querySelectorAll('.mode-card').forEach(card => card.style.borderColor = '#e5e7eb');
-    document.getElementById(`mode-${num}`).style.borderColor = '#4f46e5';
-    document.getElementById(`mode-${num}`).style.backgroundColor = '#f0f3ff';
-}
+            <!-- Lifelines (Comodines) Bar -->
+            <div class="flex justify-center gap-3">
+                <button id="lifeline-5050" onclick="useLifeline5050()" class="glass-pill px-4 py-2 rounded-xl text-xs font-semibold text-gray-300 hover:text-white hover:border-brand-500 transition flex items-center gap-2">
+                    <span>💡</span> 50:50 <span class="text-[10px] bg-brand-500/30 px-1.5 py-0.5 rounded text-brand-100" id="count-5050">1</span>
+                </button>
+                <button id="lifeline-hint" onclick="useLifelineHint()" class="glass-pill px-4 py-2 rounded-xl text-xs font-semibold text-gray-300 hover:text-white hover:border-accent-gold transition flex items-center gap-2">
+                    <span>📜</span> Pista Etimológica <span class="text-[10px] bg-accent-gold/30 px-1.5 py-0.5 rounded text-accent-gold" id="count-hint">1</span>
+                </button>
+            </div>
 
-// Inicialización por defecto
-selectGameLength(10);
+            <!-- Question Card -->
+            <div class="glass-card rounded-3xl p-6 sm:p-8 text-center space-y-4 border border-brand-500/30 relative">
+                <span class="text-xs font-bold text-brand-500 uppercase tracking-widest">¿Cuál es el gentilicio correcto?</span>
+                <h2 class="font-display text-3xl sm:text-5xl font-extrabold text-white" id="quiz-province-name">
+                    Cádiz
+                </h2>
+                <!-- Etymology Hint Box -->
+                <div id="quiz-hint-box" class="hidden bg-brand-900/50 border border-brand-500/40 rounded-xl p-3 text-xs text-brand-100 animate-fade-in max-w-lg mx-auto">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
 
-function startGame() {
-    // Mezclar preguntas aleatoriamente
-    let shuffled = [...DB].sort(() => 0.5 - Math.random());
-    selectedQuestions = shuffled.slice(0, gameLength);
-    currentQuestionIndex = 0;
-    score = 0;
-    userAnswers = [];
+            <!-- Multiple Choice Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="quiz-options-container">
+                <!-- Rendered dynamically -->
+            </div>
 
-    document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('end-screen').style.display = 'none';
-    document.getElementById('game-screen').style.display = 'block';
+            <!-- Explanatory Note Banner -->
+            <div id="quiz-explanation-box" class="hidden glass-card rounded-2xl p-4 border-l-4 border-accent-gold text-xs leading-relaxed text-gray-300 animate-fade-in">
+                <!-- Explanatory note -->
+            </div>
 
-    loadQuestion();
-}
+            <!-- Next Question Button -->
+            <button id="quiz-next-btn" onclick="nextQuizQuestion()" class="hidden w-full py-4 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-2xl shadow-lg shadow-brand-500/30 transition text-sm">
+                Siguiente Pregunta →
+            </button>
+        </section>
 
-function loadQuestion() {
-    const qData = selectedQuestions[currentQuestionIndex];
-    document.getElementById('question-count').innerText = `Pregunta ${currentQuestionIndex + 1} de ${selectedQuestions.length}`;
-    document.getElementById('score-count').innerText = `Puntos: ${score}`;
-    
-    // Actualizar barra de progreso
-    const progressPercent = ((currentQuestionIndex) / selectedQuestions.length) * 100;
-    document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+        <!-- VIEW: INTERACTIVE MAP MODE -->
+        <section id="view-map" class="hidden space-y-6">
+            <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
+                <button onclick="switchMode('menu')" class="text-xs text-gray-400 hover:text-white transition">
+                    ← Salir
+                </button>
+                <div class="text-center">
+                    <span class="text-[10px] text-gray-400 uppercase block">Modo Mapa</span>
+                    <span class="text-sm font-bold text-accent-emerald" id="map-target-gentilicio">Onubense</span>
+                </div>
+                <div class="text-sm font-bold text-accent-gold">
+                    Puntos: <span id="map-score">0</span>
+                </div>
+            </div>
 
-    document.getElementById('question-text').innerText = `¿Cuál es el gentilicio (culto o habitual) de la provincia de ${qData.province}?`;
+            <div class="glass-card rounded-3xl p-4 sm:p-6 text-center space-y-3 relative">
+                <p class="text-sm text-gray-300" id="map-instruction">
+                    Haz clic en el mapa sobre la provincia correspondiente al gentilicio:
+                    <strong class="text-accent-emerald text-lg font-display block mt-1" id="map-prompt-text">ONUBENSE</strong>
+                </p>
 
-    // Ocultar explicación y botón siguiente
-    const expDiv = document.getElementById('explanation-text');
-    expDiv.classList.remove('visible');
-    expDiv.innerHTML = '';
-    document.getElementById('btn-next').style.display = 'none';
+                <!-- SVG MAP OF SPAIN (50 PROVINCES + CEUTA/MELILLA SCHEMATIC VECTOR) -->
+                <div class="relative w-full max-w-3xl mx-auto aspect-[4/3] bg-slate-950/60 rounded-2xl p-2 border border-gray-800 flex items-center justify-center overflow-hidden">
+                    <svg id="spain-svg-map" viewBox="0 0 800 600" class="w-full h-full">
+                        <g id="provinces-group">
+                            <!-- SVG Paths rendered dynamically or loaded -->
+                        </g>
+                    </svg>
 
-    // Generar 4 opciones (1 correcta, 3 distractoras)
-    const correctAnswer = Array.isArray(qData.correct) ? qData.correct[0] : qData.correct;
-    
-    // Conseguir distractores de otras provincias
-    let otherDistractors = DB
-        .filter(item => item.province !== qData.province)
-        .map(item => Array.isArray(item.correct) ? item.correct[0] : item.correct);
-    
-    // Mezclar distractores
-    otherDistractors.sort(() => 0.5 - Math.random());
-    let options = [correctAnswer, otherDistractors[0], otherDistractors[1], otherDistractors[2]];
-    options.sort(() => 0.5 - Math.random());
+                    <!-- Hover Tooltip -->
+                    <div id="map-tooltip" class="absolute pointer-events-none hidden bg-slate-900 text-white text-xs px-2.5 py-1 rounded-md shadow-xl border border-gray-700 z-30">
+                        Provincia
+                    </div>
+                </div>
 
-    // Renderizar botones
-    const container = document.getElementById('options-container');
-    container.innerHTML = '';
+                <div id="map-feedback" class="hidden glass-card p-3 rounded-xl text-xs font-bold"></div>
+            </div>
+        </section>
 
-    options.forEach(opt => {
-        const btn = document.createElement('button');
-        btn.className = 'option-btn';
-        btn.innerText = opt;
-        btn.onclick = () => checkAnswer(btn, opt, correctAnswer, qData);
-        container.appendChild(btn);
-    });
-}
+        <!-- VIEW: TIME TRIAL MODE -->
+        <section id="view-timetrial" class="hidden space-y-6">
+            <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
+                <button onclick="switchMode('menu')" class="text-xs text-gray-400 hover:text-white transition">
+                    ← Salir
+                </button>
+                <div class="flex items-center gap-4">
+                    <div class="text-center">
+                        <span class="text-[10px] text-gray-400 uppercase block">Tiempo</span>
+                        <span class="text-xl font-black font-display text-accent-rose" id="tt-timer">60s</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="text-[10px] text-gray-400 uppercase block">Multiplicador</span>
+                        <span class="text-sm font-bold text-accent-gold" id="tt-multiplier">x1</span>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <span class="text-[10px] text-gray-400 uppercase block">Puntos</span>
+                    <span class="text-lg font-bold text-white" id="tt-score">0</span>
+                </div>
+            </div>
 
-function checkAnswer(selectedBtn, selectedText, correctAnswer, qData) {
-    const buttons = document.querySelectorAll('.option-btn');
-    buttons.forEach(btn => btn.disabled = true);
+            <div class="glass-card rounded-3xl p-8 text-center space-y-4">
+                <span class="text-xs font-bold text-accent-rose uppercase tracking-widest">¿Cuál es el gentilicio?</span>
+                <h2 class="font-display text-4xl sm:text-6xl font-extrabold text-white" id="tt-province">
+                    Valladolid
+                </h2>
+            </div>
 
-    const isCorrect = selectedText === correctAnswer;
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="tt-options-container">
+                <!-- Rapid options -->
+            </div>
+        </section>
 
-    if (isCorrect) {
-        selectedBtn.classList.add('correct');
-        score++;
-        document.getElementById('score-count').innerText = `Puntos: ${score}`;
-    } else {
-        selectedBtn.classList.add('wrong');
-        // Marcar la correcta
-        buttons.forEach(btn => {
-            if (btn.innerText === correctAnswer) {
-                btn.classList.add('correct');
+        <!-- VIEW: FLASHCARDS MODE -->
+        <section id="view-flashcards" class="hidden space-y-6">
+            <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
+                <button onclick="switchMode('menu')" class="text-xs text-gray-400 hover:text-white transition">
+                    ← Salir
+                </button>
+                <div class="text-sm text-gray-300 font-semibold">
+                    Ficha <span id="fc-curr">1</span> / <span id="fc-total">50</span>
+                </div>
+                <button onclick="shuffleFlashcards()" class="text-xs glass-pill px-3 py-1.5 rounded-lg text-accent-gold hover:bg-gray-800">
+                    🔀 Aleatorio
+                </button>
+            </div>
+
+            <!-- 3D Flip Card Container -->
+            <div class="w-full max-w-md mx-auto h-80 perspective-1000 cursor-pointer" onclick="flipCard()">
+                <div id="fc-card-inner" class="relative w-full h-full transform-style-3d rounded-3xl shadow-2xl">
+                    <!-- FRONT SIDE -->
+                    <div class="absolute inset-0 backface-hidden glass-card rounded-3xl p-8 border border-brand-500/40 flex flex-col items-center justify-center text-center space-y-4">
+                        <span class="text-xs font-bold text-brand-500 uppercase tracking-widest">Provincia / Territorio</span>
+                        <h3 class="font-display text-4xl font-extrabold text-white" id="fc-front-province">
+                            Huelva
+                        </h3>
+                        <p class="text-xs text-gray-400 flex items-center gap-1">
+                            👆 Haz clic para voltear la tarjeta
+                        </p>
+                    </div>
+
+                    <!-- BACK SIDE -->
+                    <div class="absolute inset-0 backface-hidden rotate-y-180 glass-card rounded-3xl p-8 border border-accent-gold/40 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/90">
+                        <span class="text-xs font-bold text-accent-gold uppercase tracking-widest">Gentilicio(s) Oficiales</span>
+                        <h4 class="font-display text-2xl font-bold text-emerald-400" id="fc-back-gentilicio">
+                            Onubense / Huelvano, huelvana
+                        </h4>
+                        <p class="text-xs text-gray-300 leading-relaxed max-w-xs" id="fc-back-note">
+                            Proviene del antiguo étimo latino/fenicio Onuba.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Controls -->
+            <div class="flex justify-center items-center gap-4">
+                <button onclick="prevFlashcard()" class="glass-pill px-6 py-3 rounded-xl font-bold text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition">
+                    ← Anterior
+                </button>
+                <button onclick="nextFlashcard()" class="glass-pill px-6 py-3 rounded-xl font-bold text-sm text-white bg-brand-600 hover:bg-brand-500 transition">
+                    Siguiente →
+                </button>
+            </div>
+        </section>
+
+        <!-- VIEW: RESULTS SUMMARY -->
+        <section id="view-results" class="hidden glass-card rounded-3xl p-8 text-center space-y-6 max-w-xl mx-auto my-auto animate-fade-in border border-brand-500/30">
+            <div class="w-20 h-20 rounded-full bg-brand-500/20 text-brand-100 flex items-center justify-center text-4xl mx-auto border border-brand-500/40">
+                🏆
+            </div>
+            <div class="space-y-2">
+                <h2 class="font-display text-3xl font-extrabold text-white">¡Partida Finalizada!</h2>
+                <p class="text-xs text-gray-400" id="results-subtitle">Has completado la prueba de gentilicios</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="glass-pill p-4 rounded-2xl">
+                    <span class="text-[10px] text-gray-400 uppercase block">Puntuación Final</span>
+                    <span class="text-3xl font-black font-display text-accent-gold" id="results-score">0</span>
+                </div>
+                <div class="glass-pill p-4 rounded-2xl">
+                    <span class="text-[10px] text-gray-400 uppercase block">Precisión</span>
+                    <span class="text-3xl font-black font-display text-accent-emerald" id="results-accuracy">0%</span>
+                </div>
+            </div>
+
+            <button onclick="switchMode('menu')" class="w-full py-4 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-2xl shadow-lg shadow-brand-500/30 transition text-sm">
+                Volver al Menú Principal
+            </button>
+        </section>
+
+    </main>
+
+    <script>
+        const PROVINCES_DATA = [
+            { id: "VI", prov: "Álava", correct: "Alavés, alavesa", options: ["Alavés, alavesa", "Alavesense", "Alavense", "Alavés, alavesina"], note: "Gentilicio estándar normativo en castellano.", etym: "Álava procede del euskera Araba." },
+            { id: "AB", prov: "Albacete", correct: "Albaceteño, albaceteña / Albacetense", options: ["Albaceteño, albaceteña / Albacetense", "Albacetano, albacetana", "Albacetiense", "Albaciteño, albaciteña"], note: "Admite la forma popular -eño y el culto -ense.", etym: "Del árabe al-Basit (la llanura)." },
+            { id: "A", prov: "Alicante", correct: "Alicantino, alicantina", options: ["Alicantino, alicantina", "Alicantense", "Alicanteño, alicanteña", "Lucentino, lucentina"], note: "Gentilicio único oficial.", etym: "Del árabe al-Laqant o latín Lucentum." },
+            { id: "AL", prov: "Almería", correct: "Almeriense / Almeriano, almeriana", options: ["Almeriense / Almeriano, almeriana", "Almericense", "Almeritano, almeritana", "Almerino, almerina"], note: "Forma culta predominante: Almeriense (-ense).", etym: "Del árabe al-Mariyya (la torre de vigía)." },
+            { id: "O", prov: "Asturias", correct: "Asturiano, asturiana / Asturiense", options: ["Asturiano, asturiana / Asturiense", "Astur, astura", "Asturense", "Asturicano, asturicana"], note: "Asturiense se emplea también en contexto geológico/histórico.", etym: "Relacionado con el río Astura (Esla)." },
+            { id: "AV", prov: "Ávila", correct: "Abulense", options: ["Abulense", "Avilés, avilesa", "Avilense", "Abulitano, abulitana"], note: "Procede de Ábula, étimo histórico atribuido a la ciudad romana.", etym: "Ábula -> Abulense (cultismo clásico)." },
+            { id: "BA", prov: "Badajoz", correct: "Badajocense / Badajoteño, badajoteña", options: ["Badajocense / Badajoteño, badajoteña", "Badajoceño, badajoceña", "Pacense", "Badajosense"], note: "Badajocense es el derivado culto oficial directo de Badajoz.", etym: "Pacense procede de Pax Augusta (Badajoz/Elvas)." },
+            { id: "B", prov: "Barcelona", correct: "Barcelonés, barcelonesa", options: ["Barcelonés, barcelonesa", "Barcelonense", "Barcelonino, barcelonina", "Barcelonés, barcelonesita"], note: "En catalán se utiliza barceloní, barcelonina.", etym: "Del ibérico/romano Barcino." },
+            { id: "BU", prov: "Burgos", correct: "Burgalés, burgalesa / Burgosense", options: ["Burgalés, burgalesa / Burgosense", "Burgense", "Burgoveño, burgoveña", "Burgalitano, burgalitana"], note: "Burgalés procede de la variante medieval.", etym: "Del germánico Burgs (castillo/torre)." },
+            { id: "CC", prov: "Cáceres", correct: "Cacereño, cacereña / Cacerejo, cacereja", options: ["Cacereño, cacereña / Cacerejo, cacereja", "Cacerense", "Norba-cacereño", "Cacerense, cacerensa"], note: "Norba Cæsarina fue su denominación romana.", etym: "Cacereño es el sufijo preferido." },
+            { id: "CA", prov: "Cádiz", correct: "Gaditano, gaditana", options: ["Gaditano, gaditana", "Gadicense", "Gadirita", "Gaditanense"], note: "Cultismo imprescindible: procede de Gades (latín) o Gadir (fenicio).", etym: "Gadir -> Gades -> Gaditano." },
+            { id: "S", prov: "Cantabria", correct: "Cántabro, cántabra / Montañés, montañesa", options: ["Cántabro, cántabra / Montañés, montañesa", "Cantábrico, cantábrica", "Cantabriense", "Santanderino, santanderina"], note: "Montañés hace referencia a la comarca de La Montaña.", etym: "Pueblo cántabro (origen céltico)." },
+            { id: "CS", prov: "Castellón", correct: "Castellonense / Castellonero, castellonera", options: ["Castellonense / Castellonero, castellonera", "Castellano, castellana", "Castellonés, castellonesa", "Castellonino"], note: "Castellonense es la variante culta más empleada.", etym: "Castellón de la Plana." },
+            { id: "CR", prov: "Ciudad Real", correct: "Ciudadrealeño, ciudadrealeña / Cielitano, cielitana", options: ["Ciudadrealeño, ciudadrealeña / Cielitano, cielitana", "Ciudadrealino", "Realense", "Ciudadrealense"], note: "Cielitano es una denominación tradicional y pintoresca.", etym: "Fundada como Villa Real por Alfonso X." },
+            { id: "CO", prov: "Córdoba", correct: "Cordobés, cordobesa / Califal", options: ["Cordobés, cordobesa / Califal", "Cordobense", "Cordubense", "Cordobés, cordobino"], note: "Cordubense es la forma latina clásica de Corduba.", etym: "Corduba -> Cordobés." },
+            { id: "C", prov: "A Coruña", correct: "Coruñés, coruñesa / Herculino, herculina", options: ["Coruñés, coruñesa / Herculino, herculina", "Brigantino", "Coruñense", "Coruñino"], note: "Herculino/a remite a la emblemática Torre de Hércules.", etym: "Crumenia / Crunia medieval." },
+            { id: "CU", prov: "Cuenca", correct: "Conquense", options: ["Conquense", "Cuencano, cuencana", "Cuencués, cuencuesa", "Conquino, conquina"], note: "Cultismo derivado directamente del latín Conca.", etym: "Conca -> Conquense." },
+            { id: "GI", prov: "Girona (Gerona)", correct: "Gerundense", options: ["Gerundense", "Geronés, geronesa", "Gironense", "Gerundino, gerundina"], note: "Del latín Gerunda. En catalán: gironí, gironina.", etym: "Gerunda -> Gerundense." },
+            { id: "GR", prov: "Granada", correct: "Granadino, granadina / Granadín, granadina", options: ["Granadino, granadina / Granadín, granadina", "Granadense", "Iliberitano", "Granadés"], note: "Iliberitano/a proviene de la antigua Iliberis.", etym: "Del árabe Gar-anat." },
+            { id: "GU", prov: "Guadalajara", correct: "Alcarreño, alcarreña / Guadalajareño, guadalajareña", options: ["Alcarreño, alcarreña / Guadalajareño, guadalajareña", "Guadalajarense", "Arriacense", "Guadalajarés"], note: "Alcarreño evoca la comarca natural de La Alcarria.", etym: "Wādī al-Ḥijāra (río de piedras)." },
+            { id: "SS", prov: "Guipúzcoa (Gipuzkoa)", correct: "Guipuzcoano, guipuzcoana", options: ["Guipuzcoano, guipuzcoana", "Guipuzcoense", "Guipuzcoés", "Guipuzcoino"], note: "Donostiarra alude en exclusiva a San Sebastián.", etym: "Gipuzkoa (etimología prerromana)." },
+            { id: "H", prov: "Huelva", correct: "Onubense / Huelvano, huelvana", options: ["Onubense / Huelvano, huelvana", "Huelvense", "Olissipense", "Huelveño"], note: "Cultismo clásico: deriva del asentamiento fenicio/romano Onuba.", etym: "Onuba -> Onubense." },
+            { id: "HU", prov: "Huesca", correct: "Oscense / Huesquense / Huescano, huescana", options: ["Oscense / Huesquense / Huescano, huescana", "Uscense", "Ausetano", "Huesceño"], note: "Oscense procede de Osca, la célebre ciudad íbera y romana.", etym: "Osca -> Oscense." },
+            { id: "PM", prov: "Islas Baleares", correct: "Balear / Balearico, balearica", options: ["Balear / Balearico, balearica", "Balearense", "Balearino", "Balearessa"], note: "Mallorquín, ibicenco, menorquín y formenterano para cada isla.", etym: "Del griego Ballo (lanzadores de honda)." },
+            { id: "J", prov: "Jaén", correct: "Jienense / Jiennense", options: ["Jienense / Jiennense", "Jaenero, jaenera", "Giennense", "Aurgitano"], note: "Ambas grafías (-n- / -nn-) están plenamente aceptadas.", etym: "Del árabe Jayyān." },
+            { id: "LO", prov: "La Rioja", correct: "Riojano, riojana", options: ["Riojano, riojana", "Riojense", "Riojés", "Riojanense"], note: "Forma única oficial estandarizada.", etym: "Relacionado con el río Oja (Río Oja)." },
+            { id: "GC", prov: "Las Palmas", correct: "Grancanario, grancanaria / Palmero, palmera", options: ["Grancanario, grancanaria / Palmero, palmera", "Palmentino", "Palmense", "Laspalmés"], note: "Palmero se usa para los nacidos en la isla de La Palma.", etym: "Gran Canaria / La Palma." },
+            { id: "LE", prov: "León", correct: "Leonés, leonesa", options: ["Leonés, leonesa", "Legionense", "Leonense", "Leonesino"], note: "Legionense es la variante culta derivada de Legio VII Gemina.", etym: "Legio -> León." },
+            { id: "L", prov: "Lleida (Lérida)", correct: "Leridano, leridana", options: ["Leridano, leridana", "Léridense", "Ilerdense", "Leridanés"], note: "Ilerdense procede del antiguo asentamiento ibérico Ilerda.", etym: "Ilerda -> Leridano / Ilerdense." },
+            { id: "LU", prov: "Lugo", correct: "Lucense / Lugués, luguesa", options: ["Lucense / Lugués, luguesa", "Luguense", "Lucantino", "Lugano"], note: "Lucense procede de la denominación romana Lucus Augusti.", etym: "Lucus Augusti -> Lucense." },
+            { id: "M", prov: "Madrid", correct: "Madrileño, madrileña", options: ["Madrileño, madrileña", "Matritense", "Madrileño / Matritense", "Madridense"], note: "Matritense es el cultismo poético/académico registrado.", etym: "Del árabe Mayrit." },
+            { id: "ML", prov: "Melilla", correct: "Melillense", options: ["Melillense", "Melillano, melillana", "Melilleño", "Melillés"], note: "Forma culta oficial estandarizada.", etym: "Origen bereber / fenicio Rusadir." },
+            { id: "CE", prov: "Ceuta", correct: "Ceutí / Ceutiano, ceutiana", options: ["Ceutí / Ceutiano, ceutiana", "Ceutense", "Septense", "Ceuteño"], note: "Septense remite a la ciudad romana Septem Fratres.", etym: "Septem -> Sabta -> Ceutí." },
+            { id: "MU", prov: "Murcia", correct: "Murciano, murciana", options: ["Murciano, murciana", "Murciense", "Murgetano", "Murcianés"], note: "Forma única oficial.", etym: "Mursiya (fundada por Abderramán II)." },
+            { id: "NA", prov: "Navarra", correct: "Navarro, navarra", options: ["Navarro, navarra", "Navarrense", "Navarrés", "Navarrino"], note: "Forma única oficial.", etym: "Del euskera Nabarra (comarca de llanuras)." },
+            { id: "OR", prov: "Ourense (Orense)", correct: "Ourensano, ourensana", options: ["Ourensano, ourensana", "Orensiense", "Auriense", "Orensino"], note: "Auriense se utiliza en contexto histórico sobre la Auria romana.", etym: "Auria (ciudad del oro)." },
+            { id: "P", prov: "Palencia", correct: "Palentino, palentina / Palencho, palencha", options: ["Palentino, palentina / Palencho, palencha", "Palenciano", "Pallantino", "Palentiense"], note: "Palencho/a es una variante tradicional en ámbitos rurales.", etym: "Pallantia (asentamiento vacceo)." },
+            { id: "PO", prov: "Pontevedra", correct: "Pontevedrés, pontevedresa / Pontevedrino, pontevedrina", options: ["Pontevedrés, pontevedresa / Pontevedrino, pontevedrina", "Pontevedrense", "Pontino", "Pontevedrano"], note: "Pontevedrino/a es la forma culta secundaria.", etym: "Pons Vetus (Puente Viejo)." },
+            { id: "SA", prov: "Salamanca", correct: "Salmantino, salmantina / Charro, charra", options: ["Salmantino, salmantina / Charro, charra", "Salmanticense", "Salamanqués", "Salmantense"], note: "Charro/a se aplica tradicionalmente a los salmantinos.", etym: "Salmantica romana." },
+            { id: "SG", prov: "Segovia", correct: "Segoviano, segoviana", options: ["Segoviano, segoviana", "Segobiensense", "Segoviense", "Segobricense"], note: "Segobricense alude a la antigua ciudad de Segóbriga.", etym: "Segobriga (fortaleza céltica)." },
+            { id: "SE", prov: "Sevilla", correct: "Sevillano, sevillana / Hispalense", options: ["Sevillano, sevillana / Hispalense", "Sevillense", "Hispalitano", "Sevillés"], note: "Hispalense procede de Hispalis, el étimo romano.", etym: "Hispalis -> Hispalense." },
+            { id: "SO", prov: "Soria", correct: "Soriense / Soriundo, soriunda", options: ["Soriense / Soriundo, soriunda", "Soriano, soriana", "Soriaco", "Sorián"], note: "Soriano/a es el habitual, pero Soriense y Soriundo son las variantes cultas.", etym: "Relacionado con el río Duero / Oria." },
+            { id: "T", prov: "Tarragona", correct: "Tarraconense", options: ["Tarraconense", "Tarragonés, tarragonesa", "Tarragonesino", "Tarraco-romano"], note: "Deriva directamente de la provincia hispano-romana Tarraconensis.", etym: "Tarraco -> Tarraconense." },
+            { id: "TE", prov: "Teruel", correct: "Turolense / Teruelano, teruelana", options: ["Turolense / Teruelano, teruelana", "Teruelense", "Turiazo", "Turolitano"], note: "Turolense deriva de la denominación latina medieval Turboleta.", etym: "Turboleta -> Turolense." },
+            { id: "TO", prov: "Toledo", correct: "Toledano, toledana", options: ["Toledano, toledana", "Toletano, toletana", "Toledense", "Toledino"], note: "Toletano/a se utiliza en contexto historiográfico sobre Toletum.", etym: "Toletum romana." },
+            { id: "TF", prov: "Santa Cruz de Tenerife", correct: "Tinerfeño, tinerfeña / Chicharrero, chicharrera", options: ["Tinerfeño, tinerfeña / Chicharrero, chicharrera", "Tenerifeño", "Tinerfense", "Chicharrés"], note: "Chicharrero es el gentilicio popular tradicional.", etym: "Mencey Tinerfe." },
+            { id: "V", prov: "Valencia", correct: "Valenciano, valenciana", options: ["Valenciano, valenciana", "Valentino, valentina", "Valenciencies", "Valencianés"], note: "Valentino/a procede de la fundación romana Valentia Edetanorum.", etym: "Valentia -> Valenciano." },
+            { id: "VA", prov: "Valladolid", correct: "Vallisoletano, vallisoletana", options: ["Vallisoletano, vallisoletana", "Vallisoletense", "Pucelense", "Valladolidense"], note: "Procede de la latinización Vallis Oletum (Valle de Olivos).", etym: "Vallis Oletum -> Vallisoletano." },
+            { id: "BI", prov: "Vizcaya (Bizkaia)", correct: "Vizcaíno, vizcaína", options: ["Vizcaíno, vizcaína", "Vizcayaño", "Vizcaínense", "Vizcainés"], note: "Bilbaíno/a corresponde únicamente a la villa de Bilbao.", etym: "Bizkaia (cima / cumbre)." },
+            { id: "ZA", prov: "Zamora", correct: "Zamorano, zamorana / Zamoreño, zamoreña", options: ["Zamorano, zamorana / Zamoreño, zamoreña", "Zamorese", "Zamorino", "Zamorana"], note: "Zamoreño/a es una variante tradicional en literatura vernácula.", etym: "Semura / Ocellum Duri." },
+            { id: "Z", prov: "Zaragoza", correct: "Zaragozano, zaragozana", options: ["Zaragozano, zaragozana", "Cesaraugustano, cesaraugustana", "Zaragozano / Cesaraugustano", "Saldubense"], note: "Cesaraugustano deriva de la colonia romana Caesaraugusta.", etym: "Caesaraugusta -> Zaragozano." }
+        ];
+
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
-        });
-    }
+        }
 
-    // Guardar para la revisión final
-    userAnswers.push({
-        province: qData.province,
-        userChoice: selectedText,
-        correctChoice: correctAnswer,
-        isCorrect: isCorrect,
-        info: qData.info
-    });
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            document.getElementById("audio-icon").innerText = soundEnabled ? "🔊" : "🔇";
+            document.getElementById("audio-label").innerText = soundEnabled ? "Sonido: ON" : "Sonido: OFF";
+        }
 
-    // Mostrar explicación
-    const expDiv = document.getElementById('explanation-text');
-    expDiv.innerHTML = `<strong>Nota Lingüística:</strong> ${qData.info}`;
-    expDiv.classList.add('visible');
+        function playTone(freq, type, duration, delay = 0) {
+            if (!soundEnabled) return;
+            initAudio();
+            setTimeout(() => {
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + duration);
+                } catch (e) {}
+            }, delay);
+        }
 
-    // Mostrar botón siguiente
-    document.getElementById('btn-next').style.display = 'inline-block';
-}
+        function playSoundCorrect() {
+            playTone(523.25, 'sine', 0.15, 0);   // C5
+            playTone(659.25, 'sine', 0.25, 100); // E5
+        }
 
-function nextQuestion() {
-    currentQuestionIndex++;
-    if (currentQuestionIndex < selectedQuestions.length) {
-        loadQuestion();
-    } else {
-        showResults();
-    }
-}
+        function playSoundWrong() {
+            playTone(220, 'sawtooth', 0.2, 0);   // A3
+            playTone(174.61, 'sawtooth', 0.3, 150); // F3
+        }
 
-function showResults() {
-    document.getElementById('game-screen').style.display = 'none';
-    document.getElementById('end-screen').style.display = 'block';
+        function playSoundStreak() {
+            playTone(523.25, 'triangle', 0.1, 0);
+            playTone(659.25, 'triangle', 0.1, 80);
+            playTone(783.99, 'triangle', 0.1, 160);
+            playTone(1046.50, 'triangle', 0.25, 240);
+        }
 
-    const percentage = Math.round((score / selectedQuestions.length) * 100);
-    document.getElementById('final-score').innerText = `${score}/${selectedQuestions.length}`;
-    document.getElementById('final-percentage').innerText = `${percentage}% Aciertos`;
+        let gameState = {
+            totalGames: 0,
+            correctAnswers: 0,
+            totalAnswers: 0,
+            highScore: 0,
+            unlockedBadges: [],
+            inventory5050: 1,
+            inventoryHint: 1
+        };
 
-    let feedback = "";
-    if (percentage === 100) {
-        feedback = "¡Sobresaliente absoluto! Dominas todos los gentilicios a la perfección.";
-    } else if (percentage >= 80) {
-        feedback = "¡Excelente nivel! Tienes muy claro el temario de 2º de Bachillerato.";
-    } else if (percentage >= 50) {
-        feedback = "¡Buen trabajo! Has aprobado, aunque conviene repasar los gentilicios cultos de origen latino.";
-    } else {
-        feedback = "Necesitas un repaso adicional. Haz otra ronda para afianzar los gentilicios más complejos.";
-    }
-    document.getElementById('final-feedback').innerText = feedback;
+        const BADGES_DEF = [
+            { id: "first_game", icon: "🔰", name: "Principiante", desc: "Completa tu 1ª prueba." },
+            { id: "streak_5", icon: "🔥", name: "En Racha", desc: "Consigue 5 aciertos seguidos." },
+            { id: "score_1000", icon: "⚡", name: "Rayo Léxico", desc: "Supera 1000 puntos en Contrarreloj." },
+            { id: "perfect_100", icon: "🎓", name: "Sobresaliente 2º Bach", desc: "100% de precisión en una sesión." },
+            { id: "map_master", icon: "🗺️️", name: "Cartógrafo", desc: "Acierta 5 veces en el mapa." },
+            { id: "latin_cult", icon: "🏛️", name: "Erudito Culto", desc: "Acierta un cultismo latino." }
+        ];
 
-    // Renderizar lista de revisión
-    const reviewList = document.getElementById('review-list');
-    reviewList.innerHTML = '';
+        function loadGameState() {
+            const saved = localStorage.getItem("hispania_gentilicios_data");
+            if (saved) {
+                try {
+                    gameState = { ...gameState, ...JSON.parse(saved) };
+                } catch(e) {}
+            }
+            updateDashboardUI();
+        }
 
-    userAnswers.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = `review-item ${item.isCorrect ? 'correct-item' : 'wrong-item'}`;
-        div.innerHTML = `
-            <strong>${index + 1}. ${item.province}:</strong> ${item.isCorrect ? '✅ Correcto' : '❌ Incorecto'}<br>
-            <span style="color: #4b5563;">Tu respuesta: <em>${item.userChoice}</em> ${!item.isCorrect ? `| Correcta: <strong>${item.correctChoice}</strong>` : ''}</span><br>
-            <small style="color: #6b7280;">💡 ${item.info}</small>
-        `;
-        reviewList.appendChild(div);
-    });
-}
+        function saveGameState() {
+            localStorage.setItem("hispania_gentilicios_data", JSON.stringify(gameState));
+            updateDashboardUI();
+        }
 
-function restartGame() {
-    document.getElementById('end-screen').style.display = 'none';
-    document.getElementById('start-screen').style.display = 'block';
-}
-</script>
+        function unlockBadge(badgeId) {
+            if (!gameState.unlockedBadges.includes(badgeId)) {
+                gameState.unlockedBadges.push(badgeId);
+                saveGameState();
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 } });
+            }
+        }
 
+        function updateDashboardUI() {
+            document.getElementById("global-highscore").innerText = gameState.highScore;
+            document.getElementById("stat-total-games").innerText = gameState.totalGames;
+            const accuracy = gameState.totalAnswers > 0 ? Math.round((gameState.correctAnswers / gameState.totalAnswers) * 100) : 0;
+            document.getElementById("stat-accuracy").innerText = `${accuracy}%`;
+
+            const badgesContainer = document.getElementById("badges-container");
+            badgesContainer.innerHTML = "";
+            BADGES_DEF.forEach(b => {
+                const unlocked = gameState.unlockedBadges.includes(b.id);
+                const badgeEl = document.createElement("div");
+                badgeEl.className = `glass-pill p-2 rounded-xl text-center border ${unlocked ? 'border-accent-gold/50 bg-accent-gold/10' : 'opacity-40 border-gray-800'}`;
+                badgeEl.title = `${b.name}: ${b.desc}`;
+                badgeEl.innerHTML = `
+                    <div class="text-xl">${b.icon}</div>
+                    <div class="text-[9px] font-bold text-gray-300 mt-1 truncate">${b.name}</div>
+                `;
+                badgesContainer.appendChild(badgeEl);
+            });
+        }
+
+        function switchMode(mode) {
+            initAudio();
+            const views = ["menu", "quiz", "map", "timetrial", "flashcards", "results"];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) el.classList.add("hidden");
+            });
+
+            const activeView = document.getElementById(`view-${mode}`);
+            if (activeView) activeView.classList.remove("hidden");
+
+            if (mode === "menu") {
+                updateDashboardUI();
+            }
+        }
+
+        let quizState = {
+            questions: [],
+            currIdx: 0,
+            score: 0,
+            streak: 0,
+            usedLifelines: { f5050: false, hint: false }
+        };
+
+        function startQuizMode() {
+            switchMode("quiz");
+            quizState = {
+                questions: [...PROVINCES_DATA].sort(() => Math.random() - 0.5).slice(0, 15),
+                currIdx: 0,
+                score: 0,
+                streak: 0,
+                usedLifelines: { f5050: false, hint: false }
+            };
+
+            document.getElementById("count-5050").innerText = quizState.usedLifelines.f5050 ? "0" : "1";
+            document.getElementById("count-hint").innerText = quizState.usedLifelines.hint ? "0" : "1";
+
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            const q = quizState.questions[quizState.currIdx];
+            document.getElementById("quiz-curr-q").innerText = quizState.currIdx + 1;
+            document.getElementById("quiz-score").innerText = quizState.score;
+            document.getElementById("quiz-streak").innerText = quizState.streak;
+            document.getElementById("quiz-province-name").innerText = q.prov;
+
+            document.getElementById("quiz-hint-box").classList.add("hidden");
+            document.getElementById("quiz-explanation-box").classList.add("hidden");
+            document.getElementById("quiz-next-btn").classList.add("hidden");
+
+            const container = document.getElementById("quiz-options-container");
+            container.innerHTML = "";
+
+            const opts = [...q.options].sort(() => Math.random() - 0.5);
+            opts.forEach(opt => {
+                const btn = document.createElement("button");
+                btn.className = "quiz-opt-btn glass-card p-5 rounded-2xl font-semibold text-left text-sm hover:border-brand-500/80 transition flex items-center justify-between border border-gray-800";
+                btn.innerText = opt;
+                btn.onclick = () => handleQuizAnswer(btn, opt, q.correct, q.note);
+                container.appendChild(btn);
+            });
+        }
+
+        function handleQuizAnswer(btn, selected, correct, note) {
+            const allBtns = document.querySelectorAll(".quiz-opt-btn");
+            allBtns.forEach(b => b.disabled = true);
+
+            gameState.totalAnswers++;
+
+            if (selected === correct) {
+                btn.classList.add("bg-emerald-900/40", "border-accent-emerald", "text-emerald-300");
+                quizState.score += 100 + (quizState.streak * 20);
+                quizState.streak++;
+                gameState.correctAnswers++;
+                playSoundCorrect();
+
+                if (quizState.streak >= 5) {
+                    unlockBadge("streak_5");
+                    playSoundStreak();
+                }
+
+                if (note.includes("latín") || note.includes("romana") || note.includes("Onuba") || note.includes("Gades") || note.includes("Osca")) {
+                    unlockBadge("latin_cult");
+                }
+            } else {
+                btn.classList.add("bg-rose-900/40", "border-accent-rose", "text-rose-300");
+                quizState.streak = 0;
+                playSoundWrong();
+
+                allBtns.forEach(b => {
+                    if (b.innerText === correct) {
+                        b.classList.add("bg-emerald-900/30", "border-accent-emerald/60", "text-emerald-300");
+                    }
+                });
+            }
+
+            saveGameState();
+
+            document.getElementById("quiz-score").innerText = quizState.score;
+            document.getElementById("quiz-streak").innerText = quizState.streak;
+
+            const expBox = document.getElementById("quiz-explanation-box");
+            expBox.innerHTML = `<strong>💡 Explicación Lingüística:</strong> ${note}`;
+            expBox.classList.remove("hidden");
+
+            document.getElementById("quiz-next-btn").classList.remove("hidden");
+        }
+
+        function nextQuizQuestion() {
+            quizState.currIdx++;
+            if (quizState.currIdx < quizState.questions.length) {
+                renderQuizQuestion();
+            } else {
+                finishGameSession(quizState.score, 15, quizState.questions.length);
+            }
+        }
+
+        function useLifeline5050() {
+            if (quizState.usedLifelines.f5050) return;
+            quizState.usedLifelines.f5050 = true;
+            document.getElementById("count-5050").innerText = "0";
+
+            const q = quizState.questions[quizState.currIdx];
+            const btns = Array.from(document.querySelectorAll(".quiz-opt-btn"));
+            let removed = 0;
+
+            btns.forEach(btn => {
+                if (btn.innerText !== q.correct && removed < 2) {
+                    btn.style.opacity = "0.2";
+                    btn.disabled = true;
+                    removed++;
+                }
+            });
+        }
+
+        function useLifelineHint() {
+            if (quizState.usedLifelines.hint) return;
+            quizState.usedLifelines.hint = true;
+            document.getElementById("count-hint").innerText = "0";
+
+            const q = quizState.questions[quizState.currIdx];
+            const hintBox = document.getElementById("quiz-hint-box");
+            hintBox.innerHTML = `<strong>📜 Pista Etimológica:</strong> ${q.etym}`;
+            hintBox.classList.remove("hidden");
+        }
+
+        let mapState = {
+            targetProv: null,
+            score: 0,
+            attempts: 0
+        };
+
+        function startMapMode() {
+            switchMode("map");
+            mapState.score = 0;
+            mapState.attempts = 0;
+            document.getElementById("map-score").innerText = mapState.score;
+            
+            renderSpainSVGMap();
+            nextMapTurn();
+        }
+
+        function renderSpainSVGMap() {
+            const group = document.getElementById("provinces-group");
+            group.innerHTML = "";
+
+            // Render vector arrangement for 50 provinces
+            PROVINCES_DATA.forEach((prov, i) => {
+                // Layout schematic positions in grid space for clear vector map interactivity
+                const col = i % 10;
+                const row = Math.floor(i / 10);
+                const x = 80 + col * 68;
+                const y = 80 + row * 95;
+
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                path.setAttribute("x", x);
+                path.setAttribute("y", y);
+                path.setAttribute("width", 58);
+                path.setAttribute("height", 78);
+                path.setAttribute("rx", 10);
+                path.setAttribute("class", "province-path");
+                path.setAttribute("data-id", prov.id);
+                path.setAttribute("data-prov", prov.prov);
+
+                // Add text label inside rect
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", x + 29);
+                text.setAttribute("y", y + 44);
+                text.setAttribute("fill", "#94a3b8");
+                text.setAttribute("font-size", "11");
+                text.setAttribute("font-weight", "bold");
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("pointer-events", "none");
+                text.textContent = prov.id;
+
+                path.onclick = () => handleMapClick(prov);
+
+                group.appendChild(path);
+                group.appendChild(text);
+            });
+        }
+
+        function nextMapTurn() {
+            mapState.targetProv = PROVINCES_DATA[Math.floor(Math.random() * PROVINCES_DATA.length)];
+            document.getElementById("map-prompt-text").innerText = mapState.targetProv.correct.toUpperCase();
+
+            // Reset SVG paths classes
+            document.querySelectorAll(".province-path").forEach(p => {
+                p.classList.remove("correct-target", "wrong-target");
+            });
+
+            document.getElementById("map-feedback").classList.add("hidden");
+        }
+
+        function handleMapClick(clickedProv) {
+            const pathEl = document.querySelector(`.province-path[data-id="${clickedProv.id}"]`);
+            mapState.attempts++;
+            gameState.totalAnswers++;
+
+            if (clickedProv.id === mapState.targetProv.id) {
+                pathEl.classList.add("correct-target");
+                mapState.score += 150;
+                gameState.correctAnswers++;
+                playSoundCorrect();
+                unlockBadge("map_master");
+
+                const fb = document.getElementById("map-feedback");
+                fb.innerText = `¡Correcto! ${clickedProv.prov} -> ${clickedProv.correct}`;
+                fb.className = "glass-card p-3 rounded-xl text-xs font-bold text-emerald-400 border border-emerald-500/40";
+                fb.classList.remove("hidden");
+
+                setTimeout(nextMapTurn, 1400);
+            } else {
+                pathEl.classList.add("wrong-target");
+                playSoundWrong();
+
+                const fb = document.getElementById("map-feedback");
+                fb.innerText = `Incorrecto. Has seleccionado ${clickedProv.prov}. Inténtalo de nuevo.`;
+                fb.className = "glass-card p-3 rounded-xl text-xs font-bold text-rose-400 border border-rose-500/40";
+                fb.classList.remove("hidden");
+            }
+
+            saveGameState();
+            document.getElementById("map-score").innerText = mapState.score;
+        }
+
+        let ttState = {
+            timeLeft: 60,
+            score: 0,
+            streak: 0,
+            timerId: null,
+            currProv: null
+        };
+
+        function startTimeTrialMode() {
+            switchMode("timetrial");
+            ttState = {
+                timeLeft: 60,
+                score: 0,
+                streak: 0,
+                timerId: null,
+                currProv: null
+            };
+
+            document.getElementById("tt-timer").innerText = "60s";
+            document.getElementById("tt-score").innerText = "0";
+            document.getElementById("tt-multiplier").innerText = "x1";
+
+            ttState.timerId = setInterval(() => {
+                ttState.timeLeft--;
+                document.getElementById("tt-timer").innerText = `${ttState.timeLeft}s`;
+
+                if (ttState.timeLeft <= 0) {
+                    clearInterval(ttState.timerId);
+                    if (ttState.score >= 1000) unlockBadge("score_1000");
+                    finishGameSession(ttState.score, 0, 0);
+                }
+            }, 1000);
+
+            nextTimeTrialQuestion();
+        }
+
+        function nextTimeTrialQuestion() {
+            ttState.currProv = PROVINCES_DATA[Math.floor(Math.random() * PROVINCES_DATA.length)];
+            document.getElementById("tt-province").innerText = ttState.currProv.prov;
+
+            const container = document.getElementById("tt-options-container");
+            container.innerHTML = "";
+
+            const opts = [...ttState.currProv.options].sort(() => Math.random() - 0.5);
+            opts.forEach(opt => {
+                const btn = document.createElement("button");
+                btn.className = "glass-card p-5 rounded-2xl font-bold text-center text-sm hover:border-accent-rose transition border border-gray-800";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    gameState.totalAnswers++;
+                    if (opt === ttState.currProv.correct) {
+                        const mult = Math.min(3, 1 + Math.floor(ttState.streak / 3));
+                        ttState.score += 100 * mult;
+                        ttState.streak++;
+                        gameState.correctAnswers++;
+                        playSoundCorrect();
+                    } else {
+                        ttState.streak = 0;
+                        playSoundWrong();
+                    }
+                    saveGameState();
+                    document.getElementById("tt-score").innerText = ttState.score;
+                    document.getElementById("tt-multiplier").innerText = `x${Math.min(3, 1 + Math.floor(ttState.streak / 3))}`;
+                    nextTimeTrialQuestion();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        let fcState = {
+            cards: [],
+            currIdx: 0,
+            isFlipped: false
+        };
+
+        function startFlashcardMode() {
+            switchMode("flashcards");
+            fcState.cards = [...PROVINCES_DATA];
+            fcState.currIdx = 0;
+            fcState.isFlipped = false;
+            document.getElementById("fc-total").innerText = fcState.cards.length;
+            renderFlashcard();
+        }
+
+        function renderFlashcard() {
+            const card = fcState.cards[fcState.currIdx];
+            document.getElementById("fc-curr").innerText = fcState.currIdx + 1;
+            document.getElementById("fc-front-province").innerText = card.prov;
+            document.getElementById("fc-back-gentilicio").innerText = card.correct;
+            document.getElementById("fc-back-note").innerText = `${card.note} (${card.etym})`;
+
+            const inner = document.getElementById("fc-card-inner");
+            inner.classList.remove("rotate-y-180");
+            fcState.isFlipped = false;
+        }
+
+        function flipCard() {
+            const inner = document.getElementById("fc-card-inner");
+            fcState.isFlipped = !fcState.isFlipped;
+            if (fcState.isFlipped) {
+                inner.classList.add("rotate-y-180");
+            } else {
+                inner.classList.remove("rotate-y-180");
+            }
+        }
+
+        function nextFlashcard() {
+            fcState.currIdx = (fcState.currIdx + 1) % fcState.cards.length;
+            renderFlashcard();
+        }
+
+        function prevFlashcard() {
+            fcState.currIdx = (fcState.currIdx - 1 + fcState.cards.length) % fcState.cards.length;
+            renderFlashcard();
+        }
+
+        function shuffleFlashcards() {
+            fcState.cards.sort(() => Math.random() - 0.5);
+            fcState.currIdx = 0;
+            renderFlashcard();
+        }
+
+        function finishGameSession(score, correctCount, totalQuestions) {
+            gameState.totalGames++;
+            if (score > gameState.highScore) {
+                gameState.highScore = score;
+            }
+
+            unlockBadge("first_game");
+
+            if (totalQuestions > 0 && correctCount === totalQuestions) {
+                unlockBadge("perfect_100");
+            }
+
+            saveGameState();
+
+            document.getElementById("results-score").innerText = score;
+            const accuracy = gameState.totalAnswers > 0 ? Math.round((gameState.correctAnswers / gameState.totalAnswers) * 100) : 100;
+            document.getElementById("results-accuracy").innerText = `${accuracy}%`;
+
+            switchMode("results");
+
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        window.onload = () => {
+            loadGameState();
+        };
+    </script>
 </body>
 </html>
