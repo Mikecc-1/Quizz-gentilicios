@@ -195,7 +195,7 @@
             </div>
 
             <!-- Game Modes Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
                 <!-- Mode 1: Quiz -->
                 <div onclick="startQuizMode()" class="glass-card rounded-2xl p-6 hover:border-brand-500/50 hover:scale-[1.02] transition-all cursor-pointer group flex flex-col justify-between relative overflow-hidden">
                     <div class="w-12 h-12 rounded-xl bg-brand-500/20 text-brand-100 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
@@ -242,6 +242,16 @@
                         <p class="text-xs text-gray-400 leading-relaxed mb-4">Memorización ágil con efecto giro y notas etimológicas completas.</p>
                     </div>
                     <span class="text-xs font-bold text-accent-gold flex items-center gap-1 group-hover:translate-x-1 transition">Estudiar Fichas →</span>
+                </div>
+
+                <!-- Mode 5: Written Answer -->
+                <div onclick="startWrittenMode()" class="glass-card rounded-2xl p-6 hover:border-accent-cyan/50 hover:scale-[1.02] transition-all cursor-pointer group flex flex-col justify-between relative overflow-hidden">
+                    <div class="w-12 h-12 rounded-xl bg-accent-cyan/20 text-accent-cyan flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">✍️</div>
+                    <div>
+                        <h3 class="font-display font-bold text-xl text-white mb-1 group-hover:text-accent-cyan transition">Respuesta Escrita</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed mb-4">Escribe el gentilicio de memoria. Sin opciones ni pistas.</p>
+                    </div>
+                    <span class="text-xs font-bold text-accent-cyan flex items-center gap-1 group-hover:translate-x-1 transition">Empezar →</span>
                 </div>
             </div>
 
@@ -465,6 +475,29 @@
             </div>
         </section>
 
+        <!-- VIEW: WRITTEN ANSWER MODE -->
+        <section id="view-written" class="hidden space-y-6">
+            <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
+                <button onclick="switchMode('menu')" class="text-xs text-gray-400 hover:text-white transition">← Salir</button>
+                <div class="flex items-center gap-6">
+                    <div class="text-center"><span class="text-[10px] text-gray-400 uppercase block">Pregunta</span><span class="text-sm font-bold text-white"><span id="written-curr-q">1</span>/15</span></div>
+                    <div class="text-center"><span class="text-[10px] text-gray-400 uppercase block">Puntos</span><span class="text-sm font-bold text-accent-gold" id="written-score">0</span></div>
+                    <div class="text-center"><span class="text-[10px] text-gray-400 uppercase block">Racha</span><span class="text-sm font-bold text-accent-cyan" id="written-streak">0</span></div>
+                </div>
+            </div>
+            <div class="glass-card rounded-3xl p-6 sm:p-8 text-center space-y-5 border border-accent-cyan/30">
+                <span class="text-xs font-bold text-accent-cyan uppercase tracking-widest">Escribe el gentilicio</span>
+                <h2 class="font-display text-3xl sm:text-5xl font-extrabold text-white" id="written-province-name">Cádiz</h2>
+                <p class="text-sm text-gray-400">No hay opciones. Escribe tu respuesta y pulsa Enter o «Comprobar».</p>
+                <form id="written-form" class="max-w-xl mx-auto flex flex-col sm:flex-row gap-3" onsubmit="submitWrittenAnswer(event)">
+                    <input id="written-answer" type="text" autocomplete="off" spellcheck="false" class="flex-1 bg-slate-950/70 border border-gray-700 focus:border-accent-cyan focus:ring-2 focus:ring-accent-cyan/20 rounded-2xl px-5 py-4 text-white text-center sm:text-left outline-none transition" placeholder="Escribe el gentilicio..." aria-label="Respuesta">
+                    <button id="written-submit-btn" type="submit" class="py-4 px-6 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-2xl transition">Comprobar</button>
+                </form>
+                <div id="written-feedback" class="hidden rounded-2xl p-4 text-sm font-semibold"></div>
+                <button id="written-next-btn" onclick="nextWrittenQuestion()" class="hidden w-full max-w-xl mx-auto py-4 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-2xl transition">Siguiente pregunta →</button>
+            </div>
+        </section>
+
         <!-- VIEW: RESULTS SUMMARY -->
         <section id="view-results" class="hidden glass-card rounded-3xl p-8 text-center space-y-6 max-w-xl mx-auto my-auto animate-fade-in border border-brand-500/30">
             <div class="w-20 h-20 rounded-full bg-brand-500/20 text-brand-100 flex items-center justify-center text-4xl mx-auto border border-brand-500/40">
@@ -664,7 +697,7 @@
 
         function switchMode(mode) {
             initAudio();
-            const views = ["menu", "quiz", "map", "timetrial", "flashcards", "results"];
+            const views = ["menu", "quiz", "map", "timetrial", "flashcards", "written", "results"];
             views.forEach(v => {
                 const el = document.getElementById(`view-${v}`);
                 if (el) el.classList.add("hidden");
@@ -807,6 +840,80 @@
             const hintBox = document.getElementById("quiz-hint-box");
             hintBox.innerHTML = `<strong>📜 Pista Etimológica:</strong> ${q.etym}`;
             hintBox.classList.remove("hidden");
+        }
+
+        // =========================
+        // MODO RESPUESTA ESCRITA
+        // =========================
+        let writtenState = { questions: [], currIdx: 0, score: 0, streak: 0, answered: false };
+
+        function startWrittenMode() {
+            switchMode("written");
+            writtenState = { questions: [...PROVINCES_DATA].sort(() => Math.random() - 0.5).slice(0, 15), currIdx: 0, score: 0, streak: 0, answered: false };
+            renderWrittenQuestion();
+        }
+
+        function normalizeWrittenAnswer(text) {
+            return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.,;:!?¿¡()]/g, "").replace(/\s+/g, " ").trim();
+        }
+
+        function getAcceptedWrittenAnswers(correct) {
+            return correct.split("/").map(part => normalizeWrittenAnswer(part)).filter(Boolean);
+        }
+
+        function renderWrittenQuestion() {
+            const q = writtenState.questions[writtenState.currIdx];
+            writtenState.answered = false;
+            document.getElementById("written-curr-q").innerText = writtenState.currIdx + 1;
+            document.getElementById("written-score").innerText = writtenState.score;
+            document.getElementById("written-streak").innerText = writtenState.streak;
+            document.getElementById("written-province-name").innerText = q.prov;
+            const input = document.getElementById("written-answer");
+            document.getElementById("written-submit-btn").disabled = false;
+            input.disabled = false; input.value = "";
+            document.getElementById("written-feedback").classList.add("hidden");
+            document.getElementById("written-next-btn").classList.add("hidden");
+            input.focus();
+        }
+
+        function submitWrittenAnswer(event) {
+            event.preventDefault();
+            if (writtenState.answered) return;
+            const q = writtenState.questions[writtenState.currIdx];
+            const input = document.getElementById("written-answer");
+            const feedback = document.getElementById("written-feedback");
+            if (!input.value.trim()) {
+                feedback.innerHTML = "Escribe una respuesta antes de comprobar.";
+                feedback.className = "rounded-2xl p-4 text-sm font-semibold bg-amber-900/30 border border-amber-500/40 text-amber-300";
+                feedback.classList.remove("hidden"); input.focus(); return;
+            }
+            writtenState.answered = true; input.disabled = true; document.getElementById("written-submit-btn").disabled = true;
+            gameState.totalAnswers++;
+            const isCorrect = getAcceptedWrittenAnswers(q.correct).includes(normalizeWrittenAnswer(input.value));
+            if (isCorrect) {
+                writtenState.score += 100 + writtenState.streak * 20; writtenState.streak++; gameState.correctAnswers++; playSoundCorrect();
+                if (writtenState.streak >= 5) { unlockBadge("streak_5"); playSoundStreak(); }
+                if (q.note.includes("latín") || q.note.includes("romana") || q.note.includes("Onuba") || q.note.includes("Gades") || q.note.includes("Osca")) unlockBadge("latin_cult");
+                feedback.innerHTML = `✓ ¡Correcto! <span class="font-normal">Respuesta: ${q.correct}</span>`;
+                feedback.className = "rounded-2xl p-4 text-sm font-semibold bg-emerald-900/30 border border-emerald-500/40 text-emerald-300";
+            } else {
+                writtenState.streak = 0; playSoundWrong();
+                feedback.innerHTML = `✗ No es correcto. <span class="font-normal">La respuesta era: <strong>${q.correct}</strong></span>`;
+                feedback.className = "rounded-2xl p-4 text-sm font-semibold bg-rose-900/30 border border-rose-500/40 text-rose-300";
+            }
+            feedback.classList.remove("hidden");
+            document.getElementById("written-score").innerText = writtenState.score;
+            document.getElementById("written-streak").innerText = writtenState.streak;
+            saveGameState();
+            const next = document.getElementById("written-next-btn");
+            next.innerText = writtenState.currIdx === writtenState.questions.length - 1 ? "Ver resultados →" : "Siguiente pregunta →";
+            next.classList.remove("hidden");
+        }
+
+        function nextWrittenQuestion() {
+            writtenState.currIdx++;
+            if (writtenState.currIdx < writtenState.questions.length) renderWrittenQuestion();
+            else finishGameSession(writtenState.score, writtenState.questions.length, writtenState.questions.length);
         }
 
         let mapState = {
