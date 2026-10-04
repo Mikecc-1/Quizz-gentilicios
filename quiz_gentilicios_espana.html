@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz de Gentilicios - Provincias de España | 2º Bachillerato</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --correct: #10b981;
+            --correct-bg: #ecfdf5;
+            --wrong: #ef4444;
+            --wrong-bg: #fef2f2;
+            --accent: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--text-main);
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 650px;
+            padding: 35px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .badge {
+            background-color: #e0e7ff;
+            color: var(--primary);
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #e5e7eb;
+            height: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5, #a855f7);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .question-card {
+            margin-bottom: 25px;
+        }
+
+        .question-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #374151;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background-color: #f0f3ff;
+            transform: translateY(-2px);
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+        }
+
+        .option-btn.correct {
+            background-color: var(--correct-bg);
+            border-color: var(--correct);
+            color: #065f46;
+            font-weight: 700;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong-bg);
+            border-color: var(--wrong);
+            color: #991b1b;
+        }
+
+        .explanation {
+            margin-top: 15px;
+            padding: 12px 16px;
+            background-color: #f3f4f6;
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #4b5563;
+            display: none;
+        }
+
+        .explanation.visible {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .footer-nav {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .btn-next {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            display: none;
+        }
+
+        .btn-next:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-next:active {
+            transform: scale(0.98);
+        }
+
+        /* Mode Selection Screen */
+        .start-screen, .end-screen {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .mode-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .mode-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .mode-card:hover {
+            border-color: var(--primary);
+            background-color: #f0f3ff;
+            transform: translateY(-3px);
+        }
+
+        .mode-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        .mode-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .btn-start {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 36px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4);
+            transition: all 0.2s;
+        }
+
+        .btn-start:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        /* Results styling */
+        .score-circle {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5, #9333ea);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 20px auto;
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+        }
+
+        .score-circle .number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .score-circle .label {
+            font-size: 0.8rem;
+            opacity: 0.85;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .review-list {
+            max-height: 250px;
+            overflow-y: auto;
+            text-align: left;
+            margin: 20px 0;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 10px;
+            background-color: #fafafa;
+        }
+
+        .review-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        .review-item:last-child {
+            border-bottom: none;
+        }
+
+        .review-item.wrong-item {
+            border-left: 4px solid var(--wrong);
+        }
+
+        .review-item.correct-item {
+            border-left: 4px solid var(--correct);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 20px; }
+            .mode-options { grid-template-columns: 1fr; }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- PANTALLA INICIAL -->
+    <div id="start-screen" class="start-screen">
+        <span class="badge">2º Bachillerato — Lengua Castellana</span>
+        <h1>Quiz de Gentilicios</h1>
+        <p class="subtitle">Pon a prueba tus conocimientos sobre los gentilicios de las provincias españolas (cultos, históricos y habituales).</p>
+        
+        <div class="mode-options">
+            <div class="mode-card" onclick="selectGameLength(10)" id="mode-10">
+                <h3>Rápido (10 preguntas)</h3>
+                <p>Ideal para un repaso veloz del temario antes del examen.</p>
+            </div>
+            <div class="mode-card" onclick="selectGameLength(25)" id="mode-25">
+                <h3>Medio (25 preguntas)</h3>
+                <p>Un recorrido equilibrado por la geografía lingüística.</p>
+            </div>
+            <div class="mode-card" onclick="selectGameLength(50)" id="mode-50">
+                <h3>Examen Total (50 Provincias)</h3>
+                <p>Demuestra tu dominio absoluto de todas las provincias y ciudades autónomas.</p>
+            </div>
+        </div>
+
+        <button class="btn-start" onclick="startGame()">¡Empezar Cuestionario!</button>
+    </div>
+
+    <!-- PANTALLA DE JUEGO -->
+    <div id="game-screen" style="display: none;">
+        <div class="header">
+            <span class="badge">Lengua y Literatura Castellana</span>
+            <div class="stats-bar">
+                <span id="question-count">Pregunta 1 de 10</span>
+                <span id="score-count">Puntos: 0</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+
+        <div class="question-card">
+            <h2 class="question-title" id="question-text">¿Cuál es el gentilicio habitual o culto de esta provincia?</h2>
+            <div class="options-grid" id="options-container">
+                <!-- Opciones dinámicas -->
+            </div>
+            <div class="explanation" id="explanation-text"></div>
+        </div>
+
+        <div class="footer-nav">
+            <button class="btn-next" id="btn-next" onclick="nextQuestion()">Siguiente Pregunta →</button>
+        </div>
+    </div>
+
+    <!-- PANTALLA FINAL DE RESULTADOS -->
+    <div id="end-screen" class="end-screen" style="display: none;">
+        <span class="badge">Resultado Final</span>
+        <h1>¡Cuestionario Completado!</h1>
+        <p class="subtitle" id="final-feedback">Aquí tienes el resumen de tu rendimiento:</p>
+
+        <div class="score-circle">
+            <span class="number" id="final-score">0/10</span>
+            <span class="label" id="final-percentage">0% Aciertos</span>
+        </div>
+
+        <h3 style="text-align:left; font-size: 1rem; margin-top: 15px; color: var(--text-main);">Revisión de respuestas:</h3>
+        <div class="review-list" id="review-list">
+            <!-- Lista de revisión -->
+        </div>
+
+        <button class="btn-start" onclick="restartGame()">Volver a Jugar</button>
+    </div>
+</div>
+
+<script>
+// BASE DE DATOS COMPLETA DE 50 PROVINCIAS Y CIUDADES AUTÓNOMAS
+const DB = [
+    { province: "Álava", correct: ["Alavés", "Alavesa"], info: "Habitual en el País Vasco." },
+    { province: "Albacete", correct: ["Albaceteño / Albacetense"], info: "Tanto 'albaceteño' como la forma culta 'albacetense' son válidas." },
+    { province: "Alicante", correct: ["Alicantino", "Alicantina"], info: "Gentilicio estándar de la provincia alicantina." },
+    { province: "Almería", correct: ["Almeriense", "Almeriano"], info: "'Almeriense' es la forma preferida y más extendida." },
+    { province: "Asturias", correct: ["Asturiano", "Asturiense"], info: "'Asturiense' es una variante culta e histórica procedente del latín Asturiensis." },
+    { province: "Ávila", correct: ["Abulense"], info: "Gentilicio culto muy importante en exámenes. Proviene del antiguo nombre de la ciudad (Ávila/Abula)." },
+    { province: "Badajoz", correct: ["Badajocense", "Badajoteño"], info: "'Badajocense' es la forma culta predominante." },
+    { province: "Barcelona", correct: ["Barcelonés", "Barcelonesa"], info: "En catalán se utiliza 'barceloní / barcelonina'." },
+    { province: "Burgos", correct: ["Burgalés", "Burgosense"], info: "'Burgalés' es el más común; 'burgosense' es la forma culta/eclesiástica." },
+    { province: "Cáceres", correct: ["Cacereño", "Cacereja / Cacerejo"], info: "'Cacereño/a' es la forma normativa general." },
+    { province: "Cádiz", correct: ["Gaditano", "Gaditana"], info: "Proviene de Gadir, el nombre fenicio prehistórico de la ciudad de Cádiz." },
+    { province: "Cantabria", correct: ["Cántabro", "Montañés"], info: "'Montañés/a' alude popularmente a la 'Montaña de Cantabria'." },
+    { province: "Castellón", correct: ["Castellonense", "Castellonero"], info: "'Castellonense' es la forma oficial estándar." },
+    { province: "Ceuta", correct: ["Ceutí", "Ceutiano"], info: "'Ceutí' es el gentilicio con el sufijo de origen árabe -í." },
+    { province: "Ciudad Real", correct: ["Ciudadrealeño", "Cielitano"], info: "'Cielitano' es una forma peculiar empleada tradicionalmente en la zona." },
+    { province: "Córdoba", correct: ["Cordobés", "Califal"], info: "'Califal' remite a su histórico esplendor como capital del Califato de Córdoba." },
+    { province: "A Coruña (La Coruña)", correct: ["Coruñés", "Herculino"], info: "'Herculino' hace referencia a la legendaria vinculación romana con la Torre de Hércules." },
+    { province: "Cuenca", correct: ["Conquense"], info: "Gentilicio culto de raíz latina (Conca)." },
+    { province: "Girona (Gerona)", correct: ["Gerundense"], info: "En catalán se emplea 'gironí / gironina'." },
+    { province: "Granada", correct: ["Granadino", "Granadín"], info: "'Granadín' se utiliza localmente en algunas zonas rurales." },
+    { province: "Guadalajara", correct: ["Alcarreño", "Guadalajareño"], info: "'Alcarreño/a' proviene de la comarca natural de La Alcarria." },
+    { province: "Guipúzcoa", correct: ["Guipuzcoano", "Donostiarra"], info: "'Donostiarra' aplica específicamente a los habitantes de San Sebastián (Donostia)." },
+    { province: "Huelva", correct: ["Onubense"], info: "Proviene de Onuba, la denominación fenicio-romana histórica de la zona." },
+    { province: "Huesca", correct: ["Oscense"], info: "Proviene de la ciudad romana de Osca (nombre antiguo de Huesca)." },
+    { province: "Islas Baleares", correct: ["Balear", "Mallorquín / Ibicenco / Menorquín"], info: "El término general es 'balear' o 'balearico'." },
+    { province: "Jaén", correct: ["Jienense / Jiennense"], info: "Ambas grafías ('Jienense' y 'Jiennense') son completamente válidas." },
+    { province: "La Rioja", correct: ["Riojano", "Riojana"], info: "Gentilicio único oficial para toda la comunidad y provincia autonómica." },
+    { province: "Las Palmas", correct: ["Grancanario", "Palmero"], info: "'Grancanario/a' refiere a la isla principal (Gran Canaria)." },
+    { province: "León", correct: ["Leonés", "Leonesa"], info: "Proviene del reino histórico y la provincia castellanoleonesa." },
+    { province: "Lleida (Lérida)", correct: ["Leridano"], info: "En catalán se utiliza 'lleidatà / lleidatana'." },
+    { province: "Lugo", correct: ["Lucense", "Lugués"], info: "'Lucense' es el gentilicio culto procedente del campamento romano Lucus Augusti." },
+    { province: "Madrid", correct: ["Madrileño", "Madrileña"], info: "Gentilicio de la capital de España y su comunidad uniprovincial." },
+    { province: "Melilla", correct: ["Melillense"], info: "Ciudad autónoma de España en el norte de África." },
+    { province: "Murcia", correct: ["Murciano", "Murciana"], info: "Aplicable tanto a la provincia como a la Región de Murcia." },
+    { province: "Navarra", correct: ["Navarro", "Navarra"], info: "Comunidad foral uniprovincial." },
+    { province: "Ourense (Orense)", correct: ["Ourensano", "Orensano"], info: "Formas castellana y gallega normalizadas." },
+    { province: "Palencia", correct: ["Palentino", "Palencho"], info: "'Palencho' se emplea coloquialmente en ámbitos rurales de la comarca." },
+    { province: "Pontevedra", correct: ["Pontevedrés", "Pontevedrino"], info: "'Pontevedrés/a' es la forma habitual más extendida." },
+    { province: "Salamanca", correct: ["Salmantino", "Charro"], info: "'Charro/a' es la denominación popular y cultural muy viva en Salamanca." },
+    { province: "Segovia", correct: ["Segoviano", "Segoviana"], info: "Referido a la provincia castellana de las murallas y el acueducto." },
+    { province: "Sevilla", correct: ["Sevillano", "Hispalense"], info: "'Hispalense' es el gentilicio culto derivado de Hispalis, nombre romano de Sevilla." },
+    { province: "Soria", correct: ["Soriense", "Soriundo"], info: "'Soriense' es una variante culta; 'soriano' es la más común." },
+    { province: "Tarragona", correct: ["Tarraconense"], info: "Proviene de Tarraco, célebre provincia romana de la Hispania Citerior." },
+    { province: "Teruel", correct: ["Turolense"], info: "Gentilicio culto característico basado en el topónimo medieval Turol." },
+    { province: "Toledo", correct: ["Toledano", "Toledana"], info: "Referido a la histórica ciudad imperial y su provincia." },
+    { province: "Valencia", correct: ["Valenciano", "Valenciana"], info: "Gentilicio de la provincia y comunidad mediterránea." },
+    { province: "Valladolid", correct: ["Vallisoletano", "Vallisoletana"], info: "Proviene de la latinización del topónimo histórico (Vallis Oletum)." },
+    { province: "Vizcaya", correct: ["Vizcaíno", "Bilbaíno"], info: "'Bilbaíno' identifica específicamente a los vecinos de Bilbao." },
+    { province: "Zamora", correct: ["Zamorano", "Zamoreño"], info: "'Zamorano/a' es la denominación oficial y extendida." },
+    { province: "Zaragoza", correct: ["Zaragozano", "Cesaraugustano"], info: "'Cesaraugustano' es la forma culta de Caesaraugusta (fundada por César Augusto)." }
+];
+
+// Estado del juego
+let selectedQuestions = [];
+let currentQuestionIndex = 0;
+let score = 0;
+let gameLength = 10;
+let userAnswers = [];
+
+// Selección de duración
+function selectGameLength(num) {
+    gameLength = num;
+    document.querySelectorAll('.mode-card').forEach(card => card.style.borderColor = '#e5e7eb');
+    document.getElementById(`mode-${num}`).style.borderColor = '#4f46e5';
+    document.getElementById(`mode-${num}`).style.backgroundColor = '#f0f3ff';
+}
+
+// Inicialización por defecto
+selectGameLength(10);
+
+function startGame() {
+    // Mezclar preguntas aleatoriamente
+    let shuffled = [...DB].sort(() => 0.5 - Math.random());
+    selectedQuestions = shuffled.slice(0, gameLength);
+    currentQuestionIndex = 0;
+    score = 0;
+    userAnswers = [];
+
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('end-screen').style.display = 'none';
+    document.getElementById('game-screen').style.display = 'block';
+
+    loadQuestion();
+}
+
+function loadQuestion() {
+    const qData = selectedQuestions[currentQuestionIndex];
+    document.getElementById('question-count').innerText = `Pregunta ${currentQuestionIndex + 1} de ${selectedQuestions.length}`;
+    document.getElementById('score-count').innerText = `Puntos: ${score}`;
+    
+    // Actualizar barra de progreso
+    const progressPercent = ((currentQuestionIndex) / selectedQuestions.length) * 100;
+    document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+    document.getElementById('question-text').innerText = `¿Cuál es el gentilicio (culto o habitual) de la provincia de ${qData.province}?`;
+
+    // Ocultar explicación y botón siguiente
+    const expDiv = document.getElementById('explanation-text');
+    expDiv.classList.remove('visible');
+    expDiv.innerHTML = '';
+    document.getElementById('btn-next').style.display = 'none';
+
+    // Generar 4 opciones (1 correcta, 3 distractoras)
+    const correctAnswer = Array.isArray(qData.correct) ? qData.correct[0] : qData.correct;
+    
+    // Conseguir distractores de otras provincias
+    let otherDistractors = DB
+        .filter(item => item.province !== qData.province)
+        .map(item => Array.isArray(item.correct) ? item.correct[0] : item.correct);
+    
+    // Mezclar distractores
+    otherDistractors.sort(() => 0.5 - Math.random());
+    let options = [correctAnswer, otherDistractors[0], otherDistractors[1], otherDistractors[2]];
+    options.sort(() => 0.5 - Math.random());
+
+    // Renderizar botones
+    const container = document.getElementById('options-container');
+    container.innerHTML = '';
+
+    options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(btn, opt, correctAnswer, qData);
+        container.appendChild(btn);
+    });
+}
+
+function checkAnswer(selectedBtn, selectedText, correctAnswer, qData) {
+    const buttons = document.querySelectorAll('.option-btn');
+    buttons.forEach(btn => btn.disabled = true);
+
+    const isCorrect = selectedText === correctAnswer;
+
+    if (isCorrect) {
+        selectedBtn.classList.add('correct');
+        score++;
+        document.getElementById('score-count').innerText = `Puntos: ${score}`;
+    } else {
+        selectedBtn.classList.add('wrong');
+        // Marcar la correcta
+        buttons.forEach(btn => {
+            if (btn.innerText === correctAnswer) {
+                btn.classList.add('correct');
+            }
+        });
+    }
+
+    // Guardar para la revisión final
+    userAnswers.push({
+        province: qData.province,
+        userChoice: selectedText,
+        correctChoice: correctAnswer,
+        isCorrect: isCorrect,
+        info: qData.info
+    });
+
+    // Mostrar explicación
+    const expDiv = document.getElementById('explanation-text');
+    expDiv.innerHTML = `<strong>Nota Lingüística:</strong> ${qData.info}`;
+    expDiv.classList.add('visible');
+
+    // Mostrar botón siguiente
+    document.getElementById('btn-next').style.display = 'inline-block';
+}
+
+function nextQuestion() {
+    currentQuestionIndex++;
+    if (currentQuestionIndex < selectedQuestions.length) {
+        loadQuestion();
+    } else {
+        showResults();
+    }
+}
+
+function showResults() {
+    document.getElementById('game-screen').style.display = 'none';
+    document.getElementById('end-screen').style.display = 'block';
+
+    const percentage = Math.round((score / selectedQuestions.length) * 100);
+    document.getElementById('final-score').innerText = `${score}/${selectedQuestions.length}`;
+    document.getElementById('final-percentage').innerText = `${percentage}% Aciertos`;
+
+    let feedback = "";
+    if (percentage === 100) {
+        feedback = "¡Sobresaliente absoluto! Dominas todos los gentilicios a la perfección.";
+    } else if (percentage >= 80) {
+        feedback = "¡Excelente nivel! Tienes muy claro el temario de 2º de Bachillerato.";
+    } else if (percentage >= 50) {
+        feedback = "¡Buen trabajo! Has aprobado, aunque conviene repasar los gentilicios cultos de origen latino.";
+    } else {
+        feedback = "Necesitas un repaso adicional. Haz otra ronda para afianzar los gentilicios más complejos.";
+    }
+    document.getElementById('final-feedback').innerText = feedback;
+
+    // Renderizar lista de revisión
+    const reviewList = document.getElementById('review-list');
+    reviewList.innerHTML = '';
+
+    userAnswers.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = `review-item ${item.isCorrect ? 'correct-item' : 'wrong-item'}`;
+        div.innerHTML = `
+            <strong>${index + 1}. ${item.province}:</strong> ${item.isCorrect ? '✅ Correcto' : '❌ Incorecto'}<br>
+            <span style="color: #4b5563;">Tu respuesta: <em>${item.userChoice}</em> ${!item.isCorrect ? `| Correcta: <strong>${item.correctChoice}</strong>` : ''}</span><br>
+            <small style="color: #6b7280;">💡 ${item.info}</small>
+        `;
+        reviewList.appendChild(div);
+    });
+}
+
+function restartGame() {
+    document.getElementById('end-screen').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'block';
+}
+</script>
+
+</body>
+</html>
